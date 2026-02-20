@@ -1,0 +1,99 @@
+.admin-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-inline-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1.5rem;
+}
+
+.bulk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-inline-submit {
+  height: 42px;
+  justify-content: center;
+}
+
+.btn-small.btn-success {
+  background: #10b981;
+}
+
+.btn-small.btn-success:hover {
+  background: #059669;
+}
+
+.btn-small.btn-danger {
+  background: #ef4444;
+}
+
+.btn-small.btn-danger:hover {
+  background: #dc2626;
+}
+
+.inline-link {
+  color: #0066cc;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.inline-link:hover {
+  text-decoration: underline;
+}
+
+.modal-content-wide {
+  max-width: 760px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+@media (max-width: 768px) {
+  .admin-inline-form {
+    grid-template-columns: 1fr;
+  }
+
+  .bulk-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-inline-submit {
+    width: 100%;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-actions {
+    flex-wrap: wrap;
+  }
+}

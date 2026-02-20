@@ -1,0 +1,124 @@
+⚡ QUICK START - Dr.Merceline Naserian Online Hospital
+
+═══════════════════════════════════════════════════════════════════
+
+📋 REQUIREMENTS:
+  ✓ Node.js 14+ installed (check with: node --version)
+  ✓ npm installed (check with: npm --version)
+
+═══════════════════════════════════════════════════════════════════
+
+🚀 FASTEST WAY TO GET RUNNING (5 minutes):
+
+STEP 1: Install Backend Dependencies
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+cd c:\xampp\htdocs\Hosi\server
+npm install
+
+STEP 2: Start Backend Server
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+npm start
+
+⏰ Wait for: "Server is running on port 5000"
+⚠️  KEEP THIS TERMINAL OPEN!
+
+STEP 3: Open New Terminal - Install Frontend Dependencies
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+cd c:\xampp\htdocs\Hosi\client
+npm install
+
+STEP 4: Start Frontend
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+npm start
+
+🎉 App opens at: http://localhost:3000
+
+═══════════════════════════════════════════════════════════════════
+
+🔐 LOGIN CREDENTIALS:
+
+PATIENT:
+  Email:    patient@example.com
+  Password: password
+
+ADMIN:
+  Email:    admin@example.com
+  Password: password
+
+═══════════════════════════════════════════════════════════════════
+
+✨ TEST THE APP:
+
+1. LOGIN with patient account
+2. BOOK an appointment (tomorrow's date)
+3. MAKE a payment (KSH 500)
+4. LOGOUT
+5. LOGIN with admin account
+6. ADD a meeting link (Google Meet URL or any https link)
+7. ISSUE a prescription
+8. LOGOUT and LOGIN as patient to see changes
+
+═══════════════════════════════════════════════════════════════════
+
+🆘 TROUBLESHOOTING:
+
+Q: "Server not running" / "Cannot connect to backend"
+A: → Make sure first terminal shows "Server is running on port 5000"
+   → Run: cd c:\xampp\htdocs\Hosi\server && npm start
+
+Q: "npm not found"
+A: → Install Node.js from https://nodejs.org/
+   → Restart Command Prompt after installation
+
+Q: "Port 3000 or 5000 already in use"
+A: → Close other applications using those ports
+   → Or kill the process:
+      taskkill /PID <PID> /F
+
+Q: "Dependencies error / Module not found"
+A: → Delete node_modules folder
+   → Run: npm install again
+
+═══════════════════════════════════════════════════════════════════
+
+📁 PROJECT STRUCTURE:
+
+c:\xampp\htdocs\Hosi\
+├── server/          → Backend (Express.js)
+├── client/          → Frontend (React)
+├── README.md        → Full documentation
+└── SETUP_INSTRUCTIONS.md → Detailed setup guide
+
+═══════════════════════════════════════════════════════════════════
+
+✅ YOU'RE READY!
+
+Your telemedicine platform is fully functional with:
+  ✓ Patient registration & login
+  ✓ Appointment booking
+  ✓ Payment processing
+  ✓ Online consultations
+  ✓ Digital prescriptions
+  ✓ Admin dashboard
+
+═══════════════════════════════════════════════════════════════════
+
+📞 API ENDPOINTS (Backend):
+
+http://localhost:5000/api/health         ← Check if backend is running
+http://localhost:3000                     ← Frontend application
+
+═══════════════════════════════════════════════════════════════════
+
+💡 NEXT STEPS:
+
+1. Explore all features
+2. Test complete patient journey
+3. Add more appointments/prescriptions
+4. Integrate real payment gateway (M-Pesa API)
+5. Deploy to production server
+
+═══════════════════════════════════════════════════════════════════
+
+Enjoy! 🏥
+
