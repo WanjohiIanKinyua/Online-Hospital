@@ -41,13 +41,7 @@ function Login({ setIsAuthenticated, setUserRole }) {
         navigate('/dashboard');
       }
     } catch (err) {
-      if (!err.response) {
-        setError(
-          `Cannot reach server. Set Vercel env REACT_APP_API_URL to your backend URL. Current API base: ${API_BASE_URL || '(same-origin)'}`
-        );
-      } else {
-        setError(err.response?.data?.error || `Login failed (${err.response.status}). Please try again.`);
-      }
+      setError(err.response?.data?.error || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
