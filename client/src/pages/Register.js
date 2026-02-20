@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/AuthPages.css';
+import { API_BASE_URL } from '../config/api';
 
 function Register({ setIsAuthenticated, setUserRole }) {
   const [formData, setFormData] = useState({
@@ -38,7 +39,7 @@ function Register({ setIsAuthenticated, setUserRole }) {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/register', {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,

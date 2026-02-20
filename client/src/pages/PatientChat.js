@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import DashboardLayout from '../components/DashboardLayout';
 import '../styles/ChatRoom.css';
+import { API_BASE_URL } from '../config/api';
 
 function PatientChat() {
   const token = localStorage.getItem('token');
@@ -41,7 +42,7 @@ function PatientChat() {
     if (showLoader) setLoading(true);
 
     try {
-      const response = await axios.get('http://localhost:5000/api/chat/appointments', {
+      const response = await axios.get(`${API_BASE_URL}/api/chat/appointments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAppointments(response.data);
@@ -57,7 +58,7 @@ function PatientChat() {
 
   const loadMessages = async (appointmentId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/chat/appointments/${appointmentId}/messages`, {
+      const response = await axios.get(`${API_BASE_URL}/api/chat/appointments/${appointmentId}/messages`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessages(response.data);
@@ -71,7 +72,7 @@ function PatientChat() {
 
     try {
       await axios.post(
-        `http://localhost:5000/api/chat/appointments/${selectedAppointmentId}/messages`,
+        `${API_BASE_URL}/api/chat/appointments/${selectedAppointmentId}/messages`,
         { message: messageInput },
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import '../styles/AuthPages.css';
+import { API_BASE_URL } from '../config/api';
 
 function Login({ setIsAuthenticated, setUserRole }) {
   const [email, setEmail] = useState('');
@@ -18,7 +19,7 @@ function Login({ setIsAuthenticated, setUserRole }) {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
         email,
         password
       });

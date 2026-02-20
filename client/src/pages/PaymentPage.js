@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/PaymentPage.css';
 import { FiArrowLeft, FiCheckCircle } from 'react-icons/fi';
+import { API_BASE_URL } from '../config/api';
 
 function PaymentPage() {
   const { appointmentId } = useParams();
@@ -30,7 +31,7 @@ function PaymentPage() {
 
   const fetchAppointment = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/appointments/${appointmentId}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/appointments/${appointmentId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAppointment(response.data);
@@ -76,7 +77,7 @@ function PaymentPage() {
 
     try {
       await axios.post(
-        'http://localhost:5000/api/payments/create',
+        `${API_BASE_URL}/api/payments/create`,
         {
           appointmentId,
           amount: 500,

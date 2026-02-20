@@ -5,6 +5,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import '../../styles/ModernDashboard.css';
 import '../../styles/AdminManagement.css';
 import { FiEdit2, FiPlus, FiCheckCircle, FiVideo } from 'react-icons/fi';
+import { API_BASE_URL } from '../../config/api';
 
 function AdminAppointments() {
   const [appointments, setAppointments] = useState([]);
@@ -25,7 +26,7 @@ function AdminAppointments() {
 
   const loadAppointments = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/appointments', {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/appointments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAppointments(response.data);
@@ -69,7 +70,7 @@ function AdminAppointments() {
 
     try {
       await axios.post(
-        `http://localhost:5000/api/chat/appointments/${selectedAppointment.id}/fallback-link`,
+        `${API_BASE_URL}/api/chat/appointments/${selectedAppointment.id}/fallback-link`,
         {
           meetingLink: formData.meetingLink.trim()
         },
@@ -94,7 +95,7 @@ function AdminAppointments() {
 
     try {
       await axios.post(
-        'http://localhost:5000/api/prescriptions/issue',
+        `${API_BASE_URL}/api/prescriptions/issue`,
         {
           appointmentId: selectedAppointment.id,
           medications: formData.medications,
@@ -118,7 +119,7 @@ function AdminAppointments() {
   const handleCompleteAppointment = async (appointmentId) => {
     try {
       await axios.put(
-        'http://localhost:5000/api/admin/appointment-status',
+        `${API_BASE_URL}/api/admin/appointment-status`,
         { appointmentId, status: 'completed' },
         {
           headers: { Authorization: `Bearer ${token}` }

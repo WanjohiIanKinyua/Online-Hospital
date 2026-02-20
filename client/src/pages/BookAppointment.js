@@ -4,6 +4,7 @@ import axios from 'axios';
 import '../styles/BookAppointment.css';
 import { FiArrowLeft } from 'react-icons/fi';
 import { DashboardLayout } from '../components/DashboardLayout';
+import { API_BASE_URL } from '../config/api';
 
 function BookAppointment() {
   const [formData, setFormData] = useState({
@@ -32,7 +33,7 @@ function BookAppointment() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/appointments/doctors', {
+        const response = await axios.get(`${API_BASE_URL}/api/appointments/doctors`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setDoctors(response.data);
@@ -59,7 +60,7 @@ function BookAppointment() {
 
       setSlotsLoading(true);
       try {
-        const response = await axios.get('http://localhost:5000/api/appointments/available-slots', {
+        const response = await axios.get(`${API_BASE_URL}/api/appointments/available-slots`, {
           params: { date: formData.appointmentDate },
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -126,14 +127,14 @@ function BookAppointment() {
     }
 
     try {
-      const appointmentRes = await axios.post('http://localhost:5000/api/appointments/book', formData, {
+      const appointmentRes = await axios.post(`${API_BASE_URL}/api/appointments/book`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       const appointmentId = appointmentRes.data.appointmentId;
 
       await axios.post(
-        'http://localhost:5000/api/payments/create',
+        `${API_BASE_URL}/api/payments/create`,
         {
           appointmentId,
           amount: 500,

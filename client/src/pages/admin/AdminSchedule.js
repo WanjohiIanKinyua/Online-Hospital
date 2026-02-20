@@ -4,6 +4,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import '../../styles/ModernDashboard.css';
 import '../../styles/AdminManagement.css';
 import { FiPlus, FiTrash2 } from 'react-icons/fi';
+import { API_BASE_URL } from '../../config/api';
 
 function AdminSchedule() {
   const [availabilitySlots, setAvailabilitySlots] = useState([]);
@@ -24,7 +25,7 @@ function AdminSchedule() {
   const loadSlots = useCallback(async () => {
     try {
       setPageError('');
-      const response = await axios.get('http://localhost:5000/api/admin/availability', {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/availability`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAvailabilitySlots(response.data);
@@ -59,7 +60,7 @@ function AdminSchedule() {
     }
 
     try {
-      await axios.post('http://localhost:5000/api/admin/availability', slotForm, {
+      await axios.post(`${API_BASE_URL}/api/admin/availability`, slotForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSlotForm({ slotDate: '', slotTime: '' });
@@ -78,7 +79,7 @@ function AdminSchedule() {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/admin/availability/bulk', bulkForm, {
+      const response = await axios.post(`${API_BASE_URL}/api/admin/availability/bulk`, bulkForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -94,7 +95,7 @@ function AdminSchedule() {
     if (!confirmed) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/admin/availability/${slotId}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/availability/${slotId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       await loadSlots();

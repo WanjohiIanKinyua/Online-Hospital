@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import '../styles/AuthPages.css';
+import { API_BASE_URL } from '../config/api';
 
 function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -33,7 +34,7 @@ function ResetPassword() {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/reset-password', {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/reset-password`, {
         token,
         newPassword,
         confirmPassword

@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 import '../styles/Prescriptions.css';
 import { FiArrowLeft, FiDownload, FiPrinter } from 'react-icons/fi';
 import { DashboardLayout } from '../components/DashboardLayout';
+import { API_BASE_URL } from '../config/api';
 
 function Prescriptions() {
   const [prescriptions, setPrescriptions] = useState([]);
@@ -20,7 +21,7 @@ function Prescriptions() {
 
   const fetchPrescriptions = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/prescriptions', {
+      const response = await axios.get(`${API_BASE_URL}/api/prescriptions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPrescriptions(response.data);

@@ -5,6 +5,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import '../styles/ModernDashboard.css';
 import '../styles/AdminManagement.css';
 import { FiUsers, FiCalendar, FiCheckCircle, FiDollarSign, FiArrowRight, FiDownload } from 'react-icons/fi';
+import { API_BASE_URL } from '../config/api';
 
 function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -25,13 +26,13 @@ function AdminDashboard() {
   const loadOverview = useCallback(async () => {
     try {
       const [statsRes, appointmentsRes, patientsRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/admin/dashboard', {
+        axios.get(`${API_BASE_URL}/api/admin/dashboard`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get('http://localhost:5000/api/admin/appointments', {
+        axios.get(`${API_BASE_URL}/api/admin/appointments`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get('http://localhost:5000/api/admin/patients', {
+        axios.get(`${API_BASE_URL}/api/admin/patients`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -61,7 +62,7 @@ function AdminDashboard() {
     setDownloadingIncome(true);
 
     try {
-      const response = await axios.get('http://localhost:5000/api/payments/all', {
+      const response = await axios.get(`${API_BASE_URL}/api/payments/all`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

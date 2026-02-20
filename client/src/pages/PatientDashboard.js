@@ -4,6 +4,7 @@ import axios from 'axios';
 import DashboardLayout from '../components/DashboardLayout';
 import { FiVideo, FiCalendar, FiCheckCircle, FiFileText } from 'react-icons/fi';
 import '../styles/ModernDashboard.css';
+import { API_BASE_URL } from '../config/api';
 
 function PatientDashboard() {
   const navigate = useNavigate();
@@ -34,10 +35,10 @@ function PatientDashboard() {
     const fetchData = async () => {
       try {
         const [appointmentsRes, prescriptionsRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/appointments', {
+          axios.get(`${API_BASE_URL}/api/appointments`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get('http://localhost:5000/api/prescriptions', {
+          axios.get(`${API_BASE_URL}/api/prescriptions`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);

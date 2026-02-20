@@ -4,6 +4,7 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import { FiArrowLeft, FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhoneOff, FiVolumeX } from 'react-icons/fi';
 import '../styles/Consultation.css';
+import { API_BASE_URL } from '../config/api';
 
 const RTC_CONFIG = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
@@ -39,7 +40,7 @@ function Consultation() {
 
     const fetchAppointment = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/appointments/${appointmentId}`, {
+        const response = await axios.get(`${API_BASE_URL}/api/appointments/${appointmentId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -77,7 +78,7 @@ function Consultation() {
         localVideoRef.current.srcObject = stream;
       }
 
-      const socket = io('http://localhost:5000', {
+      const socket = io(`${API_BASE_URL}`, {
         auth: { token }
       });
       socketRef.current = socket;

@@ -4,6 +4,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import '../../styles/ModernDashboard.css';
 import '../../styles/AdminManagement.css';
 import { FiPlus, FiToggleLeft, FiToggleRight } from 'react-icons/fi';
+import { API_BASE_URL } from '../../config/api';
 
 function AdminDoctors() {
   const [doctors, setDoctors] = useState([]);
@@ -19,7 +20,7 @@ function AdminDoctors() {
   const loadDoctors = useCallback(async () => {
     try {
       setPageError('');
-      const response = await axios.get('http://localhost:5000/api/admin/doctors', {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/doctors`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDoctors(response.data);
@@ -56,7 +57,7 @@ function AdminDoctors() {
     }
 
     try {
-      await axios.post('http://localhost:5000/api/admin/doctors', formData, {
+      await axios.post(`${API_BASE_URL}/api/admin/doctors`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setFormData({ fullName: '', specialty: 'General Medicine' });
@@ -69,7 +70,7 @@ function AdminDoctors() {
   const toggleDoctor = async (doctor) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/admin/doctors/${doctor.id}/status`,
+        `${API_BASE_URL}/api/admin/doctors/${doctor.id}/status`,
         { isActive: !Boolean(doctor.isActive) },
         { headers: { Authorization: `Bearer ${token}` } }
       );

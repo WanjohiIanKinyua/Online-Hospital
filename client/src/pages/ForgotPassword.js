@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/AuthPages.css';
+import { API_BASE_URL } from '../config/api';
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -18,7 +19,7 @@ function ForgotPassword() {
     setDevResetLink('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
+      const response = await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, { email });
       setMessage(response.data?.message || 'If the account exists, a reset link has been sent.');
       if (response.data?.devResetLink) {
         setDevResetLink(response.data.devResetLink);

@@ -4,6 +4,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import '../../styles/ModernDashboard.css';
 import '../../styles/AdminManagement.css';
 import { FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { API_BASE_URL } from '../../config/api';
 
 const EMPTY_FORM = {
   fullName: '',
@@ -29,7 +30,7 @@ function AdminPatients() {
 
   const loadPatients = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/patients', {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/patients`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPatients(response.data);
@@ -92,7 +93,7 @@ function AdminPatients() {
     try {
       if (mode === 'add') {
         await axios.post(
-          'http://localhost:5000/api/admin/patients',
+          `${API_BASE_URL}/api/admin/patients`,
           {
             fullName: formData.fullName.trim(),
             email: formData.email.trim(),
@@ -107,7 +108,7 @@ function AdminPatients() {
         alert('Patient created successfully');
       } else {
         await axios.put(
-          `http://localhost:5000/api/admin/patients/${editingPatient.id}`,
+          `${API_BASE_URL}/api/admin/patients/${editingPatient.id}`,
           {
             fullName: formData.fullName.trim(),
             email: formData.email.trim(),
@@ -134,7 +135,7 @@ function AdminPatients() {
     if (!confirmed) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/admin/patients/${patient.id}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/patients/${patient.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       await loadPatients();

@@ -4,6 +4,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import '../../styles/ModernDashboard.css';
 import '../../styles/AdminManagement.css';
 import { FiCheck, FiX } from 'react-icons/fi';
+import { API_BASE_URL } from '../../config/api';
 
 function AdminApprovals() {
   const [appointments, setAppointments] = useState([]);
@@ -12,7 +13,7 @@ function AdminApprovals() {
 
   const loadAppointments = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/appointments', {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/appointments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAppointments(response.data);
@@ -47,7 +48,7 @@ function AdminApprovals() {
 
     try {
       await axios.put(
-        `http://localhost:5000/api/admin/appointments/${appointmentId}/approval`,
+        `${API_BASE_URL}/api/admin/appointments/${appointmentId}/approval`,
         { approvalStatus, reason },
         { headers: { Authorization: `Bearer ${token}` } }
       );

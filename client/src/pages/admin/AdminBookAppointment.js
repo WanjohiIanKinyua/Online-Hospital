@@ -4,6 +4,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import '../../styles/ModernDashboard.css';
 import '../../styles/AdminManagement.css';
 import { FiClock } from 'react-icons/fi';
+import { API_BASE_URL } from '../../config/api';
 
 function AdminBookAppointment() {
   const [patients, setPatients] = useState([]);
@@ -23,10 +24,10 @@ function AdminBookAppointment() {
     const loadInitialData = async () => {
       try {
         const [patientsRes, doctorsRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/admin/patients', {
+          axios.get(`${API_BASE_URL}/api/admin/patients`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get('http://localhost:5000/api/appointments/doctors', {
+          axios.get(`${API_BASE_URL}/api/appointments/doctors`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
@@ -54,7 +55,7 @@ function AdminBookAppointment() {
       }
 
       try {
-        const response = await axios.get('http://localhost:5000/api/appointments/available-slots', {
+        const response = await axios.get(`${API_BASE_URL}/api/appointments/available-slots`, {
           params: { date: formData.appointmentDate },
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -87,7 +88,7 @@ function AdminBookAppointment() {
     }
 
     try {
-      await axios.post('http://localhost:5000/api/admin/appointments/book', formData, {
+      await axios.post(`${API_BASE_URL}/api/admin/appointments/book`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

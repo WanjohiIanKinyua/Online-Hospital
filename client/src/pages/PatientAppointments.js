@@ -4,6 +4,7 @@ import axios from 'axios';
 import DashboardLayout from '../components/DashboardLayout';
 import { FiVideo } from 'react-icons/fi';
 import '../styles/ModernDashboard.css';
+import { API_BASE_URL } from '../config/api';
 
 function PatientAppointments() {
   const [appointments, setAppointments] = useState([]);
@@ -15,7 +16,7 @@ function PatientAppointments() {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/appointments', {
+        const response = await axios.get(`${API_BASE_URL}/api/appointments`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setAppointments(response.data);
