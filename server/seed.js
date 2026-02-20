@@ -1,12 +1,7 @@
-const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
-const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const db = require('./database');
 
-const dbPath = path.join(__dirname, 'hospital.db');
-const db = new sqlite3.Database(dbPath);
-
-// Demo user accounts
 const demoData = {
   users: [
     {
@@ -45,41 +40,52 @@ const demoData = {
   ]
 };
 
-console.log('🌱 Seeding demo data into database...\n');
+const seed = async () => {
+  console.log('Seeding demo data into PostgreSQL...\n');
 
-db.serialize(() => {
-  // Clear existing users (optional, comment out to keep existing data)
-  // db.run(`DELETE FROM users WHERE role = 'patient' OR (role = 'admin' AND email = 'admin@example.com')`);
+  for (let index = 0; index < demoData.users.length; index += 1) {
+    const user = demoData.users[index];
+    try {
+      await db.query(
+        `
+        INSERT INTO users (id, fullName, email, password, phone, role, dateOfBirth, gender, address)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ON CONFLICT (email) DO NOTHING
+        `,
+        [
+          user.id,
+          user.fullName,
+          user.email,
+          user.password,
+          user.phone,
+          user.role,
+          user.dateOfBirth,
+          user.gender,
+          user.address
+        ]
+      );
+      console.log(`User ${index + 1} added/exists: ${user.email} (Role: ${user.role})`);
+    } catch (err) {
+      console.log(`Error inserting user ${index + 1}:`, err.message);
+    }
+  }
 
-  // Insert demo users
-  demoData.users.forEach((user, index) => {
-    db.run(
-      `INSERT OR IGNORE INTO users (id, fullName, email, password, phone, role, dateOfBirth, gender, address) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [user.id, user.fullName, user.email, user.password, user.phone, user.role, user.dateOfBirth, user.gender, user.address],
-      (err) => {
-        if (err) {
-          console.log(`❌ Error inserting user ${index + 1}:`, err.message);
-        } else {
-          console.log(`✅ User ${index + 1} added: ${user.email} (Role: ${user.role})`);
-        }
-      }
-    );
-  });
+  console.log('\nDemo data seeding complete!');
+  console.log('\nDemo Credentials:');
+  console.log('--------------------------------------------------');
+  console.log('Patient Account:');
+  console.log('  Email: patient@example.com');
+  console.log('  Password: password');
+  console.log('');
+  console.log('Admin Account:');
+  console.log('  Email: admin@example.com');
+  console.log('  Password: password');
+  console.log('--------------------------------------------------');
+  console.log('\nYou can now start the application!');
+  process.exit(0);
+};
 
-  setTimeout(() => {
-    console.log('\n✨ Demo data seeding complete!');
-    console.log('\n📝 Demo Credentials:');
-    console.log('━'.repeat(50));
-    console.log('Patient Account:');
-    console.log('  Email: patient@example.com');
-    console.log('  Password: password');
-    console.log('');
-    console.log('Admin Account:');
-    console.log('  Email: admin@example.com');
-    console.log('  Password: password');
-    console.log('━'.repeat(50));
-    console.log('\n✨ You can now start the application!');
-    process.exit(0);
-  }, 1000);
+seed().catch((err) => {
+  console.error('Seeding failed:', err.message);
+  process.exit(1);
 });

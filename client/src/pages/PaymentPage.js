@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/PaymentPage.css';
@@ -23,13 +23,7 @@ function PaymentPage() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
-  useEffect(() => {
-    fetchAppointment();
-  },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  [appointmentId]);
-
-  const fetchAppointment = async () => {
+  const fetchAppointment = useCallback(async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/appointments/${appointmentId}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -38,7 +32,11 @@ function PaymentPage() {
     } catch (err) {
       setError('Failed to load appointment details');
     }
-  };
+  }, [appointmentId, token]);
+
+  useEffect(() => {
+    fetchAppointment();
+  }, [fetchAppointment]);
 
   const handlePaymentDetailsChange = (e) => {
     const { name, value } = e.target;
@@ -311,4 +309,3 @@ function PaymentPage() {
 }
 
 export default PaymentPage;
-

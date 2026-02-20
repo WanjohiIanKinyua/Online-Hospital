@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import jsPDF from 'jspdf';
@@ -13,13 +13,7 @@ function Prescriptions() {
   const [error, setError] = useState('');
   const token = localStorage.getItem('token');
 
-  useEffect(() => {
-    fetchPrescriptions();
-  },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  []);
-
-  const fetchPrescriptions = async () => {
+  const fetchPrescriptions = useCallback(async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/prescriptions`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -30,7 +24,11 @@ function Prescriptions() {
       setError('Failed to load prescriptions');
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchPrescriptions();
+  }, [fetchPrescriptions]);
 
   const downloadPrescription = (prescription) => {
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -223,5 +221,4 @@ Please use it as instructed by your doctor.
 }
 
 export default Prescriptions;
-
 
