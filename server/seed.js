@@ -18,7 +18,7 @@ const demoData = {
     {
       id: uuidv4(),
       fullName: 'Admin User',
-      email: 'admin@example.com',
+      email: 'drnaserian@admin.com',
       password: bcrypt.hashSync('password', 10),
       phone: '+254712345679',
       role: 'admin',
@@ -78,7 +78,7 @@ const seed = async () => {
   console.log('  Password: password');
   console.log('');
   console.log('Admin Account:');
-  console.log('  Email: admin@example.com');
+  console.log('  Email: drnaserian@admin.com');
   console.log('  Password: password');
   console.log('--------------------------------------------------');
   console.log('\nYou can now start the application!');

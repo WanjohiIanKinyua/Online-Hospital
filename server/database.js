@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { Pool } = require('pg');
 
 const rawConnectionString = process.env.DATABASE_URL;
