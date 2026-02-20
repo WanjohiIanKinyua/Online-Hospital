@@ -25,6 +25,12 @@ function AdminPatients() {
   const [editingPatient, setEditingPatient] = useState(null);
 
   const token = localStorage.getItem('token');
+  const getDisplayName = (record) => record.fullName || record.fullname || record.name || '-';
+  const formatDate = (value) => {
+    if (!value) return '-';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleDateString();
+  };
 
   const modalTitle = useMemo(() => (mode === 'add' ? 'Add Patient' : 'Edit Patient'), [mode]);
 
@@ -57,11 +63,11 @@ function AdminPatients() {
     setMode('edit');
     setEditingPatient(patient);
     setFormData({
-      fullName: patient.fullName || '',
+      fullName: patient.fullName || patient.fullname || patient.name || '',
       email: patient.email || '',
       password: '',
       phone: patient.phone || '',
-      dateOfBirth: patient.dateOfBirth || '',
+      dateOfBirth: patient.dateOfBirth || patient.dateofbirth || '',
       gender: patient.gender || '',
       address: patient.address || ''
     });
@@ -131,7 +137,7 @@ function AdminPatients() {
   };
 
   const handleDeletePatient = async (patient) => {
-    const confirmed = window.confirm(`Delete patient ${patient.fullName}? This also removes their appointments and records.`);
+    const confirmed = window.confirm(`Delete patient ${getDisplayName(patient)}? This also removes their appointments and records.`);
     if (!confirmed) return;
 
     try {
@@ -193,13 +199,13 @@ function AdminPatients() {
                   <tbody>
                     {patients.map((patient) => (
                       <tr key={patient.id}>
-                        <td>{patient.fullName}</td>
+                        <td>{getDisplayName(patient)}</td>
                         <td>{patient.email}</td>
                         <td>{patient.phone || <span className="text-muted">N/A</span>}</td>
-                        <td>{patient.dateOfBirth || <span className="text-muted">N/A</span>}</td>
+                        <td>{patient.dateOfBirth || patient.dateofbirth || <span className="text-muted">N/A</span>}</td>
                         <td>{patient.gender || <span className="text-muted">N/A</span>}</td>
                         <td>{patient.address || <span className="text-muted">N/A</span>}</td>
-                        <td>{new Date(patient.createdAt).toLocaleDateString()}</td>
+                        <td>{formatDate(patient.createdAt || patient.createdat)}</td>
                         <td>
                           <div className="admin-actions">
                             <button className="btn-small" onClick={() => openEditModal(patient)} title="Edit patient">

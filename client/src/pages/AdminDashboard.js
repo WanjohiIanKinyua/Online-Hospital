@@ -22,6 +22,12 @@ function AdminDashboard() {
   const [downloadingIncome, setDownloadingIncome] = useState(false);
 
   const token = localStorage.getItem('token');
+  const getDisplayName = (record) => record.fullName || record.fullname || record.name || '-';
+  const formatDate = (value) => {
+    if (!value) return '-';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleDateString();
+  };
 
   const loadOverview = useCallback(async () => {
     try {
@@ -214,8 +220,8 @@ function AdminDashboard() {
                   <tbody>
                     {appointments.slice(0, 6).map((apt) => (
                       <tr key={apt.id}>
-                        <td>{apt.fullName}</td>
-                        <td>{new Date(apt.appointmentDate).toLocaleDateString()}</td>
+                        <td>{getDisplayName(apt)}</td>
+                        <td>{formatDate(apt.appointmentDate || apt.appointmentdate)}</td>
                         <td>{apt.appointmentTime}</td>
                         <td>
                           <span className={`status-badge status-${apt.status}`}>
@@ -257,10 +263,10 @@ function AdminDashboard() {
                   <tbody>
                     {patients.slice(0, 6).map((patient) => (
                       <tr key={patient.id}>
-                        <td>{patient.fullName}</td>
+                        <td>{getDisplayName(patient)}</td>
                         <td>{patient.email}</td>
                         <td>{patient.phone || <span className="text-muted">N/A</span>}</td>
-                        <td>{new Date(patient.createdAt).toLocaleDateString()}</td>
+                        <td>{formatDate(patient.createdAt || patient.createdat)}</td>
                       </tr>
                     ))}
                   </tbody>

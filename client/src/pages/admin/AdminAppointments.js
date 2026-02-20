@@ -23,6 +23,12 @@ function AdminAppointments() {
 
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
+  const getDisplayName = (record) => record.fullName || record.fullname || record.name || '-';
+  const formatDate = (value) => {
+    if (!value) return '-';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleDateString();
+  };
 
   const loadAppointments = useCallback(async () => {
     try {
@@ -186,9 +192,9 @@ function AdminAppointments() {
                   <tbody>
                     {appointments.map((apt) => (
                       <tr key={apt.id}>
-                        <td>{apt.fullName}</td>
+                        <td>{getDisplayName(apt)}</td>
                         <td>{apt.email}</td>
-                        <td>{new Date(apt.appointmentDate).toLocaleDateString()}</td>
+                        <td>{formatDate(apt.appointmentDate || apt.appointmentdate)}</td>
                         <td>{apt.appointmentTime}</td>
                         <td>
                           <span className={`status-badge status-${apt.status}`}>{apt.status}</span>

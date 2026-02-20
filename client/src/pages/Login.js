@@ -27,7 +27,8 @@ function Login({ setIsAuthenticated, setUserRole }) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('userRole', response.data.user.role);
       localStorage.setItem('userId', response.data.user.id);
-      localStorage.setItem('userName', response.data.user.fullName);
+      const resolvedName = response.data.user.fullName || response.data.user.fullname || response.data.user.name || '';
+      localStorage.setItem('userName', resolvedName);
       localStorage.setItem('userEmail', response.data.user.email);
       localStorage.setItem('loginSuccess', '1');
 
@@ -113,4 +114,3 @@ function Login({ setIsAuthenticated, setUserRole }) {
 }
 
 export default Login;
-

@@ -23,8 +23,12 @@ export function DashboardLayout({ children, role = 'patient' }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const userName = localStorage.getItem('userName') || 'User';
   const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
+  const rawUserName = localStorage.getItem('userName');
+  const userName =
+    rawUserName && rawUserName !== 'undefined' && rawUserName !== 'null'
+      ? rawUserName
+      : (userEmail.split('@')[0] || 'User');
 
   const patientLinks = [
     { to: '/dashboard', icon: FiLayout, label: 'Overview' },
