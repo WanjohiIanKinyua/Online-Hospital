@@ -1,161 +1,264 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { Pool } = require('pg');
 
-const dbPath = path.join(__dirname, 'hospital.db');
-const db = new sqlite3.Database(dbPath);
+const rawConnectionString = process.env.DATABASE_URL;
 
-db.serialize(() => {
-  // Users table
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      fullName TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      phone TEXT,
-      role TEXT DEFAULT 'patient',
-      dateOfBirth TEXT,
-      gender TEXT,
-      address TEXT,
-      resetTokenHash TEXT,
-      resetTokenExpiresAt INTEGER,
-      createdAt TEXT DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+const isPlaceholderConnectionString = (value) => {
+  if (!value) return true;
+  return /:\/\/user:password@host(\/|\?|$)/i.test(value);
+};
 
-  // Appointments table
-  db.run(`
-    CREATE TABLE IF NOT EXISTS appointments (
-      id TEXT PRIMARY KEY,
-      patientId TEXT NOT NULL,
-      doctorName TEXT DEFAULT 'Dr. Merceline',
-      appointmentDate TEXT NOT NULL,
-      appointmentTime TEXT NOT NULL,
-      status TEXT DEFAULT 'pending',
-      approvalStatus TEXT DEFAULT 'pending',
-      approvalReason TEXT,
-      meetingLink TEXT,
-      paymentStatus TEXT DEFAULT 'pending',
-      consultationFee INTEGER DEFAULT 500,
-      createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (patientId) REFERENCES users(id)
-    )
-  `);
+const withCompatSslMode = (value) => {
+  if (!value) return value;
+  if (!/sslmode=require/i.test(value)) return value;
+  if (/uselibpqcompat=/i.test(value)) return value;
+  return value.includes('?')
+    ? `${value}&uselibpqcompat=true`
+    : `${value}?uselibpqcompat=true`;
+};
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS doctors (
-      id TEXT PRIMARY KEY,
-      fullName TEXT NOT NULL UNIQUE,
-      specialty TEXT DEFAULT 'General Medicine',
-      isActive INTEGER DEFAULT 1,
-      createdAt TEXT DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+const connectionString = withCompatSslMode(rawConnectionString);
+const hasValidDatabaseUrl = !isPlaceholderConnectionString(connectionString);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS availability_slots (
-      id TEXT PRIMARY KEY,
-      slotDate TEXT NOT NULL,
-      slotTime TEXT NOT NULL,
-      isActive INTEGER DEFAULT 1,
-      createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(slotDate, slotTime)
-    )
-  `);
-
-  // Payments table
-  db.run(`
-    CREATE TABLE IF NOT EXISTS payments (
-      id TEXT PRIMARY KEY,
-      appointmentId TEXT NOT NULL,
-      patientId TEXT NOT NULL,
-      amount INTEGER NOT NULL,
-      paymentMethod TEXT,
-      transactionId TEXT UNIQUE,
-      status TEXT DEFAULT 'completed',
-      paymentDate TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (appointmentId) REFERENCES appointments(id),
-      FOREIGN KEY (patientId) REFERENCES users(id)
-    )
-  `);
-
-  // Prescriptions table
-  db.run(`
-    CREATE TABLE IF NOT EXISTS prescriptions (
-      id TEXT PRIMARY KEY,
-      appointmentId TEXT NOT NULL,
-      patientId TEXT NOT NULL,
-      doctorName TEXT,
-      medications TEXT,
-      dosageInstructions TEXT,
-      medicalNotes TEXT,
-      followUpRecommendations TEXT,
-      issuedAt TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (appointmentId) REFERENCES appointments(id),
-      FOREIGN KEY (patientId) REFERENCES users(id)
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS chat_messages (
-      id TEXT PRIMARY KEY,
-      appointmentId TEXT NOT NULL,
-      senderId TEXT NOT NULL,
-      senderRole TEXT NOT NULL,
-      senderName TEXT NOT NULL,
-      message TEXT NOT NULL,
-      createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (appointmentId) REFERENCES appointments(id),
-      FOREIGN KEY (senderId) REFERENCES users(id)
-    )
-  `);
-
-  db.all(`PRAGMA table_info(appointments)`, (tableErr, columns) => {
-    if (tableErr) {
-      console.error('Failed to inspect appointments table:', tableErr.message);
-      return;
-    }
-
-    const columnNames = columns.map((col) => col.name);
-    if (!columnNames.includes('approvalStatus')) {
-      db.run(`ALTER TABLE appointments ADD COLUMN approvalStatus TEXT DEFAULT 'pending'`);
-    }
-    if (!columnNames.includes('approvalReason')) {
-      db.run(`ALTER TABLE appointments ADD COLUMN approvalReason TEXT`);
-    }
-  });
-
-  db.all(`PRAGMA table_info(users)`, (userTableErr, columns) => {
-    if (userTableErr) {
-      console.error('Failed to inspect users table:', userTableErr.message);
-      return;
-    }
-
-    const userColumnNames = columns.map((col) => col.name);
-    if (!userColumnNames.includes('resetTokenHash')) {
-      db.run(`ALTER TABLE users ADD COLUMN resetTokenHash TEXT`);
-    }
-    if (!userColumnNames.includes('resetTokenExpiresAt')) {
-      db.run(`ALTER TABLE users ADD COLUMN resetTokenExpiresAt INTEGER`);
-    }
-  });
-
-  db.get(`SELECT COUNT(*) as count FROM doctors`, (doctorCountErr, row) => {
-    if (doctorCountErr) {
-      console.error('Failed to inspect doctors table:', doctorCountErr.message);
-      return;
-    }
-
-    if ((row?.count || 0) === 0) {
-      const seedDoctorId = 'doctor-merceline';
-      db.run(
-        `INSERT INTO doctors (id, fullName, specialty, isActive) VALUES (?, ?, ?, 1)`,
-        [seedDoctorId, 'Dr. Merceline', 'General Medicine']
-      );
-    }
-  });
-
-  console.log('Database tables initialized successfully');
+const pool = new Pool({
+  connectionString: hasValidDatabaseUrl ? connectionString : undefined,
+  ssl: hasValidDatabaseUrl ? { rejectUnauthorized: false } : false
 });
+
+let sharedClientPromise = null;
+const getClient = async () => {
+  if (!sharedClientPromise) {
+    sharedClientPromise = pool.connect();
+  }
+  return sharedClientPromise;
+};
+
+const toPgSql = (sql, params = []) => {
+  let text = String(sql || '');
+
+  // SQLite -> PostgreSQL compatibility transforms.
+  if (/insert\s+or\s+ignore/i.test(text)) {
+    text = text.replace(/insert\s+or\s+ignore/i, 'INSERT');
+    text = `${text} ON CONFLICT DO NOTHING`;
+  }
+  text = text.replace(/date\('now'\)/gi, 'CURRENT_DATE');
+
+  // Convert ? placeholders to $1, $2, ...
+  let index = 0;
+  text = text.replace(/\?/g, () => {
+    index += 1;
+    return `$${index}`;
+  });
+
+  return { text, values: params };
+};
+
+const normalizeArgs = (params, callback) => {
+  if (typeof params === 'function') {
+    return { values: [], cb: params };
+  }
+  return { values: Array.isArray(params) ? params : [], cb: callback };
+};
+
+const db = {
+  query: async (sql, params = []) => {
+    const q = toPgSql(sql, params);
+    const client = await getClient();
+    return client.query(q.text, q.values);
+  },
+
+  run(sql, params, callback) {
+    const { values, cb } = normalizeArgs(params, callback);
+    const q = toPgSql(sql, values);
+    getClient()
+      .then((client) => client.query(q.text, q.values))
+      .then((result) => {
+        if (cb) cb.call({ changes: result.rowCount || 0, lastID: null }, null);
+      })
+      .catch((err) => {
+        if (cb) cb(err);
+      });
+  },
+
+  get(sql, params, callback) {
+    const { values, cb } = normalizeArgs(params, callback);
+    const q = toPgSql(sql, values);
+    getClient()
+      .then((client) => client.query(q.text, q.values))
+      .then((result) => {
+        const row = result.rows && result.rows.length > 0 ? result.rows[0] : undefined;
+        if (cb) cb(null, row);
+      })
+      .catch((err) => {
+        if (cb) cb(err);
+      });
+  },
+
+  all(sql, params, callback) {
+    const { values, cb } = normalizeArgs(params, callback);
+    const q = toPgSql(sql, values);
+    getClient()
+      .then((client) => client.query(q.text, q.values))
+      .then((result) => {
+        if (cb) cb(null, result.rows || []);
+      })
+      .catch((err) => {
+        if (cb) cb(err);
+      });
+  },
+
+  serialize(fn) {
+    if (typeof fn === 'function') fn();
+  },
+
+  prepare(sql) {
+    let pending = 0;
+    let finalizeRequested = false;
+    let finalizeCb = null;
+
+    const maybeFinalize = () => {
+      if (finalizeRequested && pending === 0 && finalizeCb) {
+        finalizeCb(null);
+      }
+    };
+
+    return {
+      run(params, callback) {
+        pending += 1;
+        db.run(sql, params, function onRun(err) {
+          pending -= 1;
+          if (callback) callback.call(this, err);
+          maybeFinalize();
+        });
+      },
+      finalize(callback) {
+        finalizeRequested = true;
+        finalizeCb = callback;
+        maybeFinalize();
+      }
+    };
+  },
+
+  pool
+};
+
+const initializeDatabase = async () => {
+  if (!hasValidDatabaseUrl) {
+    console.error(
+      'DATABASE_URL is missing or using placeholder host. Set a real PostgreSQL URL in server/.env before starting backend.'
+    );
+    return;
+  }
+
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        fullName TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        phone TEXT,
+        role TEXT DEFAULT 'patient',
+        dateOfBirth TEXT,
+        gender TEXT,
+        address TEXT,
+        resetTokenHash TEXT,
+        resetTokenExpiresAt BIGINT,
+        createdAt TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS appointments (
+        id TEXT PRIMARY KEY,
+        patientId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        doctorName TEXT DEFAULT 'Dr. Merceline',
+        appointmentDate TEXT NOT NULL,
+        appointmentTime TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        approvalStatus TEXT DEFAULT 'pending',
+        approvalReason TEXT,
+        meetingLink TEXT,
+        paymentStatus TEXT DEFAULT 'pending',
+        consultationFee INTEGER DEFAULT 500,
+        createdAt TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS doctors (
+        id TEXT PRIMARY KEY,
+        fullName TEXT NOT NULL UNIQUE,
+        specialty TEXT DEFAULT 'General Medicine',
+        isActive INTEGER DEFAULT 1,
+        createdAt TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS availability_slots (
+        id TEXT PRIMARY KEY,
+        slotDate TEXT NOT NULL,
+        slotTime TEXT NOT NULL,
+        isActive INTEGER DEFAULT 1,
+        createdAt TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(slotDate, slotTime)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS payments (
+        id TEXT PRIMARY KEY,
+        appointmentId TEXT NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+        patientId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        amount INTEGER NOT NULL,
+        paymentMethod TEXT,
+        transactionId TEXT UNIQUE,
+        status TEXT DEFAULT 'completed',
+        paymentDate TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS prescriptions (
+        id TEXT PRIMARY KEY,
+        appointmentId TEXT NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+        patientId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        doctorName TEXT,
+        medications TEXT,
+        dosageInstructions TEXT,
+        medicalNotes TEXT,
+        followUpRecommendations TEXT,
+        issuedAt TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id TEXT PRIMARY KEY,
+        appointmentId TEXT NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+        senderId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        senderRole TEXT NOT NULL,
+        senderName TEXT NOT NULL,
+        message TEXT NOT NULL,
+        createdAt TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(
+      `
+      INSERT INTO doctors (id, fullName, specialty, isActive)
+      VALUES ($1, $2, $3, 1)
+      ON CONFLICT DO NOTHING
+      `,
+      ['doctor-merceline', 'Dr. Merceline', 'General Medicine']
+    );
+
+    console.log('PostgreSQL tables initialized successfully');
+  } catch (err) {
+    console.error('Failed to initialize PostgreSQL schema:', err.message);
+  }
+};
+
+initializeDatabase();
 
 module.exports = db;
