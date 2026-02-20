@@ -60,11 +60,58 @@ const normalizeArgs = (params, callback) => {
   return { values: Array.isArray(params) ? params : [], cb: callback };
 };
 
+const keyMap = {
+  fullname: 'fullName',
+  dateofbirth: 'dateOfBirth',
+  createdat: 'createdAt',
+  resettokenhash: 'resetTokenHash',
+  resettokenexpiresat: 'resetTokenExpiresAt',
+  patientid: 'patientId',
+  patientname: 'patientName',
+  patientemail: 'patientEmail',
+  doctorname: 'doctorName',
+  appointmentdate: 'appointmentDate',
+  appointmenttime: 'appointmentTime',
+  approvalstatus: 'approvalStatus',
+  approvalreason: 'approvalReason',
+  meetinglink: 'meetingLink',
+  paymentstatus: 'paymentStatus',
+  consultationfee: 'consultationFee',
+  slotdate: 'slotDate',
+  slottime: 'slotTime',
+  isactive: 'isActive',
+  appointmentid: 'appointmentId',
+  paymentmethod: 'paymentMethod',
+  transactionid: 'transactionId',
+  paymentdate: 'paymentDate',
+  dosageinstructions: 'dosageInstructions',
+  medicalnotes: 'medicalNotes',
+  followuprecommendations: 'followUpRecommendations',
+  issuedat: 'issuedAt',
+  senderid: 'senderId',
+  senderrole: 'senderRole',
+  sendername: 'senderName'
+};
+
+const normalizeRowKeys = (row) => {
+  if (!row || typeof row !== 'object') return row;
+  const normalized = {};
+  Object.keys(row).forEach((key) => {
+    const mappedKey = keyMap[key] || key;
+    normalized[mappedKey] = row[key];
+  });
+  return normalized;
+};
+
 const db = {
   query: async (sql, params = []) => {
     const q = toPgSql(sql, params);
     const client = await getClient();
-    return client.query(q.text, q.values);
+    const result = await client.query(q.text, q.values);
+    return {
+      ...result,
+      rows: Array.isArray(result.rows) ? result.rows.map(normalizeRowKeys) : result.rows
+    };
   },
 
   run(sql, params, callback) {
@@ -86,7 +133,7 @@ const db = {
     getClient()
       .then((client) => client.query(q.text, q.values))
       .then((result) => {
-        const row = result.rows && result.rows.length > 0 ? result.rows[0] : undefined;
+        const row = result.rows && result.rows.length > 0 ? normalizeRowKeys(result.rows[0]) : undefined;
         if (cb) cb(null, row);
       })
       .catch((err) => {
@@ -100,7 +147,7 @@ const db = {
     getClient()
       .then((client) => client.query(q.text, q.values))
       .then((result) => {
-        if (cb) cb(null, result.rows || []);
+        if (cb) cb(null, (result.rows || []).map(normalizeRowKeys));
       })
       .catch((err) => {
         if (cb) cb(err);
