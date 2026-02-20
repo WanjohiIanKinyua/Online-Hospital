@@ -60,7 +60,13 @@ function Register({ setIsAuthenticated, setUserRole }) {
 
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      if (!err.response) {
+        setError(
+          `Cannot reach server. Set Vercel env REACT_APP_API_URL to your backend URL. Current API base: ${API_BASE_URL || '(same-origin)'}`
+        );
+      } else {
+        setError(err.response?.data?.error || `Registration failed (${err.response.status}). Please try again.`);
+      }
     } finally {
       setLoading(false);
     }
@@ -195,4 +201,3 @@ function Register({ setIsAuthenticated, setUserRole }) {
 }
 
 export default Register;
-
