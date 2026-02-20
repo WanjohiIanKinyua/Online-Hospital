@@ -55,8 +55,9 @@ const sendResetEmail = async ({ toEmail, resetLink }) => {
 
 exports.register = (req, res) => {
   const { fullName, email, password, phone, dateOfBirth, gender, address } = req.body;
+  const normalizedEmail = String(email || '').trim().toLowerCase();
 
-  if (!fullName || !email || !password) {
+  if (!fullName || !normalizedEmail || !password) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -67,16 +68,20 @@ exports.register = (req, res) => {
   db.run(
     `INSERT INTO users (id, fullName, email, password, phone, dateOfBirth, gender, address, role) 
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [userId, fullName, email, hashedPassword, phone || null, dateOfBirth || null, gender || null, address || null, 'patient'],
+    [userId, fullName, normalizedEmail, hashedPassword, phone || null, dateOfBirth || null, gender || null, address || null, 'patient'],
     (err) => {
       if (err) {
-        if (err.message.includes('UNIQUE constraint failed')) {
+        if (
+          err.code === '23505' ||
+          err.message.includes('UNIQUE constraint failed') ||
+          err.message.toLowerCase().includes('duplicate key value')
+        ) {
           return res.status(400).json({ error: 'Email already registered' });
         }
         return res.status(500).json({ error: 'Registration failed' });
       }
 
-      const token = jwt.sign({ id: userId, email, role: 'patient' }, JWT_SECRET, { expiresIn: '7d' });
+      const token = jwt.sign({ id: userId, email: normalizedEmail, role: 'patient' }, JWT_SECRET, { expiresIn: '7d' });
       res.status(201).json({ message: 'User registered successfully', token, userId });
     }
   );
@@ -84,12 +89,13 @@ exports.register = (req, res) => {
 
 exports.login = (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = String(email || '').trim().toLowerCase();
 
-  if (!email || !password) {
+  if (!normalizedEmail || !password) {
     return res.status(400).json({ error: 'Email and password required' });
   }
 
-  db.get('SELECT * FROM users WHERE email = ?', [email], (err, user) => {
+  db.get('SELECT * FROM users WHERE email = ?', [normalizedEmail], (err, user) => {
     if (err) {
       return res.status(500).json({ error: 'Login failed' });
     }
@@ -148,12 +154,13 @@ exports.updateProfile = (req, res) => {
 
 exports.forgotPassword = (req, res) => {
   const { email } = req.body;
+  const normalizedEmail = String(email || '').trim().toLowerCase();
 
-  if (!email) {
+  if (!normalizedEmail) {
     return res.status(400).json({ error: 'Email is required' });
   }
 
-  db.get('SELECT id, email FROM users WHERE email = ?', [email], async (err, user) => {
+  db.get('SELECT id, email FROM users WHERE email = ?', [normalizedEmail], async (err, user) => {
     if (err) {
       return res.status(500).json({ error: 'Failed to process request' });
     }
