@@ -19,7 +19,9 @@ function PatientChat() {
 
   useEffect(() => {
     loadAppointments();
-  }, []);
+  },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  []);
 
   useEffect(() => {
     if (!selectedAppointmentId) return;
@@ -31,7 +33,9 @@ function PatientChat() {
     }, 5000);
 
     return () => clearInterval(intervalId);
-  }, [selectedAppointmentId]);
+  },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [selectedAppointmentId]);
 
   const loadAppointments = async (showLoader = true) => {
     if (showLoader) setLoading(true);
@@ -224,3 +228,4 @@ function PatientChat() {
 }
 
 export default PatientChat;
+

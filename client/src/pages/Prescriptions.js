@@ -14,7 +14,9 @@ function Prescriptions() {
 
   useEffect(() => {
     fetchPrescriptions();
-  }, []);
+  },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  []);
 
   const fetchPrescriptions = async () => {
     try {
@@ -220,4 +222,5 @@ Please use it as instructed by your doctor.
 }
 
 export default Prescriptions;
+
 

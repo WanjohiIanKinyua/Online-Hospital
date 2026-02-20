@@ -24,7 +24,9 @@ function PaymentPage() {
 
   useEffect(() => {
     fetchAppointment();
-  }, [appointmentId]);
+  },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [appointmentId]);
 
   const fetchAppointment = async () => {
     try {
@@ -308,3 +310,4 @@ function PaymentPage() {
 }
 
 export default PaymentPage;
+

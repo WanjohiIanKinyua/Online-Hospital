@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { FiArrowLeft, FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhoneOff, FiVolumeX } from 'react-icons/fi';
@@ -11,7 +11,6 @@ const RTC_CONFIG = {
 
 function Consultation() {
   const { appointmentId } = useParams();
-  const navigate = useNavigate();
 
   const [appointment, setAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -62,7 +61,9 @@ function Consultation() {
       mounted = false;
       cleanupMeeting();
     };
-  }, [appointmentId]);
+  },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [appointmentId]);
 
   const startMeeting = async () => {
     try {
@@ -356,3 +357,4 @@ function Consultation() {
 }
 
 export default Consultation;
+

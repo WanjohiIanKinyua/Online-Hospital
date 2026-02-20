@@ -19,7 +19,9 @@ function AdminChat() {
 
   useEffect(() => {
     loadAppointments();
-  }, []);
+  },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  []);
 
   useEffect(() => {
     if (!selectedAppointmentId) return;
@@ -32,7 +34,9 @@ function AdminChat() {
     }, 5000);
 
     return () => clearInterval(intervalId);
-  }, [selectedAppointmentId]);
+  },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [selectedAppointmentId]);
 
   useEffect(() => {
     setFallbackLinkInput(selectedAppointment?.meetingLink || '');
@@ -188,3 +192,4 @@ function AdminChat() {
 }
 
 export default AdminChat;
+
