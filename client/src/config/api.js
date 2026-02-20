@@ -14,8 +14,13 @@ const resolveApiBaseUrl = () => {
     return `${protocol}//${hostname}:5000`;
   }
 
+  if (hostname.endsWith('.vercel.app')) {
+    return 'https://online-hospital.onrender.com';
+  }
+
   // Hosted frontend must provide REACT_APP_API_URL.
   return '';
 };
 
-export const API_BASE_URL = resolveApiBaseUrl();
+const rawApiBaseUrl = resolveApiBaseUrl();
+export const API_BASE_URL = rawApiBaseUrl.replace(/\/+$/, '');
