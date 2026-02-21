@@ -46,14 +46,14 @@ exports.getChatAppointments = (req, res) => {
         SELECT cm.message
         FROM chat_messages cm
         WHERE cm.appointmentId = a.id
-        ORDER BY cm.createdAt DESC
+        ORDER BY cm.createdat DESC
         LIMIT 1
       ) AS lastMessage,
       (
-        SELECT cm.createdAt
+        SELECT cm.createdat
         FROM chat_messages cm
         WHERE cm.appointmentId = a.id
-        ORDER BY cm.createdAt DESC
+        ORDER BY cm.createdat DESC
         LIMIT 1
       ) AS lastMessageAt
     FROM appointments a
@@ -65,7 +65,7 @@ exports.getChatAppointments = (req, res) => {
     params.push(req.user.id);
   }
 
-  query += ' ORDER BY COALESCE(lastMessageAt, a.createdAt) DESC';
+  query += ' ORDER BY a.appointmentDate DESC, a.appointmentTime DESC';
 
   db.all(query, params, (err, rows) => {
     if (err) {
@@ -84,10 +84,10 @@ exports.getAppointmentMessages = (req, res) => {
     }
 
     db.all(
-      `SELECT id, appointmentId, senderId, senderRole, senderName, message, createdAt
+      `SELECT id, appointmentId, senderId, senderRole, senderName, message, createdat as createdAt
        FROM chat_messages
        WHERE appointmentId = ?
-       ORDER BY createdAt ASC`,
+       ORDER BY createdat ASC`,
       [appointmentId],
       (err, messages) => {
         if (err) {
