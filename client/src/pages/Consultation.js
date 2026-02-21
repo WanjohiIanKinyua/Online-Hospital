@@ -34,6 +34,7 @@ function Consultation() {
 
   const roomId = `appointment-${appointmentId}`;
   const isAdmin = userRole === 'admin';
+  const offerRetryTimersRef = useRef({});
 
   useEffect(() => {
     let mounted = true;
@@ -72,6 +73,12 @@ function Consultation() {
         video: true,
         audio: true
       });
+      stream.getVideoTracks().forEach((track) => {
+        track.enabled = true;
+      });
+      stream.getAudioTracks().forEach((track) => {
+        track.enabled = true;
+      });
 
       localStreamRef.current = stream;
       await attachLocalStream(stream);
@@ -104,6 +111,10 @@ function Consultation() {
           return next;
         });
         createPeerConnection(participant.socketId, false);
+      });
+
+      socket.on('connect_error', (connectError) => {
+        setError(connectError?.message || 'Meeting connection failed');
       });
 
       socket.on('participant-left', ({ socketId }) => {
@@ -192,23 +203,42 @@ function Consultation() {
     };
 
     if (shouldCreateOffer) {
-      pc.createOffer()
-        .then((offer) => pc.setLocalDescription(offer).then(() => offer))
-        .then((offer) => {
-          socket.emit('webrtc-offer', {
-            targetSocketId,
-            offer
-          });
-        })
-        .catch((offerErr) => {
-          console.error('Offer error:', offerErr);
-        });
+      sendOffer(targetSocketId, pc);
+    } else {
+      // Fallback: if initial signaling is missed, send an offer after a short delay.
+      offerRetryTimersRef.current[targetSocketId] = setTimeout(() => {
+        const currentPc = peerConnectionsRef.current[targetSocketId];
+        if (!currentPc) return;
+        if (currentPc.currentRemoteDescription) return;
+        sendOffer(targetSocketId, currentPc);
+      }, 1200);
     }
 
     return pc;
   };
 
+  const sendOffer = (targetSocketId, pc) => {
+    const socket = socketRef.current;
+    if (!socket || !pc) return;
+
+    pc.createOffer()
+      .then((offer) => pc.setLocalDescription(offer).then(() => offer))
+      .then((offer) => {
+        socket.emit('webrtc-offer', {
+          targetSocketId,
+          offer
+        });
+      })
+      .catch((offerErr) => {
+        console.error('Offer error:', offerErr);
+      });
+  };
+
   const closePeerConnection = (socketId) => {
+    if (offerRetryTimersRef.current[socketId]) {
+      clearTimeout(offerRetryTimersRef.current[socketId]);
+      delete offerRetryTimersRef.current[socketId];
+    }
     const pc = peerConnectionsRef.current[socketId];
     if (pc) {
       pc.close();
@@ -217,6 +247,11 @@ function Consultation() {
   };
 
   const cleanupMeeting = () => {
+    Object.keys(offerRetryTimersRef.current).forEach((socketId) => {
+      clearTimeout(offerRetryTimersRef.current[socketId]);
+      delete offerRetryTimersRef.current[socketId];
+    });
+
     Object.keys(peerConnectionsRef.current).forEach((socketId) => {
       closePeerConnection(socketId);
     });
