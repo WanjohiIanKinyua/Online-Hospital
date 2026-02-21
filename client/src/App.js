@@ -11,6 +11,7 @@ import ResetPassword from './pages/ResetPassword';
 import PatientDashboard from './pages/PatientDashboard';
 import PatientAppointments from './pages/PatientAppointments';
 import PatientChat from './pages/PatientChat';
+import PatientProfile from './pages/PatientProfile';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminAppointments from './pages/admin/AdminAppointments';
 import AdminPatients from './pages/admin/AdminPatients';
@@ -80,6 +81,7 @@ function App() {
                 <Route path="/book-appointment" element={<BookAppointment />} />
                 <Route path="/appointments" element={<PatientAppointments />} />
                 <Route path="/chat" element={<PatientChat />} />
+                <Route path="/profile" element={<PatientProfile />} />
                 <Route path="/consultation/:appointmentId" element={<Consultation />} />
                 <Route path="/payment/:appointmentId" element={<PaymentPage />} />
                 <Route path="/prescriptions" element={<Prescriptions />} />

@@ -7,6 +7,7 @@ import {
   FiPlusSquare,
   FiMessageSquare,
   FiFileText,
+  FiSettings,
   FiUsers,
   FiBarChart2,
   FiClock,
@@ -36,7 +37,8 @@ export function DashboardLayout({ children, role = 'patient' }) {
     { to: '/book-appointment', icon: FiPlusSquare, label: 'Book Appointment' },
     { to: '/appointments', icon: FiCalendar, label: 'Booked Appointments' },
     { to: '/chat', icon: FiMessageSquare, label: 'Chat Room' },
-    { to: '/prescriptions', icon: FiFileText, label: 'Prescriptions' }
+    { to: '/prescriptions', icon: FiFileText, label: 'Prescriptions' },
+    { to: '/profile', icon: FiSettings, label: 'My Profile' }
   ];
 
   const adminLinks = [
