@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { FiArrowLeft, FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhoneOff, FiVolumeX } from 'react-icons/fi';
@@ -12,6 +12,7 @@ const RTC_CONFIG = {
 
 function Consultation() {
   const { appointmentId } = useParams();
+  const navigate = useNavigate();
 
   const [appointment, setAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -166,6 +167,11 @@ function Consultation() {
       socket.on('meeting-ended', ({ endedBy }) => {
         setMeetingEnded(true);
         setError(`Meeting ended by ${endedBy}.`);
+        if (isAdmin) {
+          setTimeout(() => {
+            navigate('/admin/doctor-notes');
+          }, 400);
+        }
       });
     } catch (mediaError) {
       setError('Could not access camera/microphone. Please allow permissions and reload.');
