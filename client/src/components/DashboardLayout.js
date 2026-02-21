@@ -13,6 +13,7 @@ import {
   FiCheckSquare,
   FiUserPlus,
   FiUser,
+  FiEdit3,
   FiMenu,
   FiX
 } from 'react-icons/fi';
@@ -44,6 +45,7 @@ export function DashboardLayout({ children, role = 'patient' }) {
     { to: '/admin/approvals', icon: FiCheckSquare, label: 'Approvals' },
     { to: '/admin/book-for-patient', icon: FiUserPlus, label: 'Book Patient' },
     { to: '/admin/doctors', icon: FiUser, label: 'Doctors' },
+    { to: '/admin/doctor-notes', icon: FiEdit3, label: 'Doctor Notes' },
     { to: '/admin/chat', icon: FiMessageSquare, label: 'Chat Room' },
     { to: '/admin/appointments', icon: FiCalendar, label: 'Appointments' },
     { to: '/admin/patients', icon: FiUsers, label: 'Patients' }

@@ -132,7 +132,11 @@ const keyMap = {
   issuedat: 'issuedAt',
   senderid: 'senderId',
   senderrole: 'senderRole',
-  sendername: 'senderName'
+  sendername: 'senderName',
+  doctorid: 'doctorId',
+  patientage: 'patientAge',
+  notecontent: 'noteContent',
+  updatedat: 'updatedAt'
 };
 
 const normalizeRowKeys = (row) => {
@@ -327,6 +331,21 @@ const initializeDatabase = async () => {
         senderName TEXT NOT NULL,
         message TEXT NOT NULL,
         createdAt TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS patient_notes (
+        id TEXT PRIMARY KEY,
+        doctorId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        doctorName TEXT,
+        patientId TEXT REFERENCES users(id) ON DELETE SET NULL,
+        patientName TEXT NOT NULL,
+        patientAge INTEGER,
+        issue TEXT NOT NULL,
+        noteContent TEXT,
+        createdAt TIMESTAMPTZ DEFAULT NOW(),
+        updatedAt TIMESTAMPTZ DEFAULT NOW()
       )
     `);
 

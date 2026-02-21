@@ -19,6 +19,7 @@ import AdminApprovals from './pages/admin/AdminApprovals';
 import AdminBookAppointment from './pages/admin/AdminBookAppointment';
 import AdminDoctors from './pages/admin/AdminDoctors';
 import AdminChat from './pages/admin/AdminChat';
+import AdminDoctorNotes from './pages/admin/AdminDoctorNotes';
 import BookAppointment from './pages/BookAppointment';
 import Consultation from './pages/Consultation';
 import PaymentPage from './pages/PaymentPage';
@@ -93,6 +94,7 @@ function App() {
                 <Route path="/admin/book-for-patient" element={<AdminBookAppointment />} />
                 <Route path="/admin/doctors" element={<AdminDoctors />} />
                 <Route path="/admin/chat" element={<AdminChat />} />
+                <Route path="/admin/doctor-notes" element={<AdminDoctorNotes />} />
                 <Route path="/admin/appointments" element={<AdminAppointments />} />
                 <Route path="/admin/patients" element={<AdminPatients />} />
                 <Route path="/consultation/:appointmentId" element={<Consultation />} />

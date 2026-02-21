@@ -1,5 +1,6 @@
 const express = require('express');
 const adminController = require('../controllers/adminController');
+const doctorNotesController = require('../controllers/doctorNotesController');
 const { authenticateToken, authorizeRole } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -25,5 +26,9 @@ router.delete('/availability/:slotId', adminController.deleteAvailabilitySlot);
 router.put('/appointment-status', adminController.updateAppointmentStatus);
 router.post('/meeting-link', adminController.addMeetingLink);
 router.get('/report', adminController.getDetailedReport);
+router.get('/notes/patients', doctorNotesController.searchPatients);
+router.get('/notes', doctorNotesController.getDoctorNotes);
+router.post('/notes', doctorNotesController.createDoctorNote);
+router.put('/notes/:noteId', doctorNotesController.updateDoctorNote);
 
 module.exports = router;
