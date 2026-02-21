@@ -91,7 +91,7 @@ exports.getAvailabilitySlots = (req, res) => {
     `
       SELECT id, slotDate, slotTime, isActive, createdAt
       FROM availability_slots
-      WHERE slotDate >= date('now')
+      WHERE slotDate >= to_char(CURRENT_DATE, 'YYYY-MM-DD')
       ORDER BY slotDate ASC, slotTime ASC
     `,
     (err, slots) => {
