@@ -74,9 +74,9 @@ function Consultation() {
       });
 
       localStreamRef.current = stream;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
+      await attachLocalStream(stream);
+      setCameraEnabled(stream.getVideoTracks().some((track) => track.enabled));
+      setMicEnabled(stream.getAudioTracks().some((track) => track.enabled));
 
       const socket = io(`${API_BASE_URL}`, {
         auth: { token }
@@ -232,6 +232,35 @@ function Consultation() {
     }
   };
 
+  const emitParticipantState = (nextMicEnabled, nextCameraEnabled) => {
+    if (!socketRef.current) return;
+    socketRef.current.emit('participant-state', {
+      micEnabled: nextMicEnabled,
+      cameraEnabled: nextCameraEnabled
+    });
+  };
+
+  const attachLocalStream = async (stream) => {
+    if (!localVideoRef.current) return;
+    localVideoRef.current.srcObject = stream;
+    try {
+      await localVideoRef.current.play();
+    } catch (playErr) {
+      // Browsers can block autoplay until user gesture; keep stream attached.
+    }
+  };
+
+  const replaceVideoTrackForPeers = (track) => {
+    Object.values(peerConnectionsRef.current).forEach((pc) => {
+      const sender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
+      if (sender) {
+        sender.replaceTrack(track).catch(() => {});
+      } else if (localStreamRef.current && track) {
+        pc.addTrack(track, localStreamRef.current);
+      }
+    });
+  };
+
   const toggleMic = (forcedState = null, forcedByAdmin = false) => {
     if (!localStreamRef.current) return;
 
@@ -245,29 +274,49 @@ function Consultation() {
       setMutedByAdmin(false);
     }
 
-    if (socketRef.current) {
-      socketRef.current.emit('participant-state', {
-        micEnabled: nextState,
-        cameraEnabled
-      });
-    }
+    emitParticipantState(nextState, cameraEnabled);
   };
 
-  const toggleCamera = () => {
-    if (!localStreamRef.current) return;
-
+  const toggleCamera = async () => {
     const nextState = !cameraEnabled;
-    localStreamRef.current.getVideoTracks().forEach((track) => {
-      track.enabled = nextState;
-    });
-    setCameraEnabled(nextState);
 
-    if (socketRef.current) {
-      socketRef.current.emit('participant-state', {
-        micEnabled,
-        cameraEnabled: nextState
-      });
+    if (!localStreamRef.current) {
+      localStreamRef.current = new MediaStream();
     }
+
+    const existingVideoTrack = localStreamRef.current.getVideoTracks()[0];
+
+    if (nextState) {
+      if (existingVideoTrack && existingVideoTrack.readyState === 'live') {
+        existingVideoTrack.enabled = true;
+      } else {
+        try {
+          const videoStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' },
+            audio: false
+          });
+          const freshTrack = videoStream.getVideoTracks()[0];
+          if (freshTrack) {
+            if (existingVideoTrack) {
+              localStreamRef.current.removeTrack(existingVideoTrack);
+              existingVideoTrack.stop();
+            }
+            localStreamRef.current.addTrack(freshTrack);
+            replaceVideoTrackForPeers(freshTrack);
+          }
+        } catch (cameraError) {
+          setError('Unable to access camera. Please allow camera permission and try again.');
+          return;
+        }
+      }
+      setError('');
+    } else if (existingVideoTrack) {
+      existingVideoTrack.enabled = false;
+    }
+
+    setCameraEnabled(nextState);
+    await attachLocalStream(localStreamRef.current);
+    emitParticipantState(micEnabled, nextState);
   };
 
   const endMeetingAsAdmin = () => {
@@ -358,4 +407,3 @@ function Consultation() {
 }
 
 export default Consultation;
-
