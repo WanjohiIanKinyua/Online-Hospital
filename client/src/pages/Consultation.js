@@ -36,6 +36,7 @@ function Consultation() {
   const roomId = `appointment-${appointmentId}`;
   const isAdmin = userRole === 'admin';
   const offerRetryTimersRef = useRef({});
+  const remoteParticipant = participants[0] || null;
 
   useEffect(() => {
     let mounted = true;
@@ -412,11 +413,35 @@ function Consultation() {
       <div className="video-grid">
         <div className="video-card local">
           <div className="video-label">You ({isAdmin ? 'Admin' : 'Patient'})</div>
+          <div className="video-status">
+            {!micEnabled && (
+              <span className="video-status-pill">
+                <FiMicOff /> Muted
+              </span>
+            )}
+            {!cameraEnabled && (
+              <span className="video-status-pill">
+                <FiVideoOff /> Camera Off
+              </span>
+            )}
+          </div>
           <video ref={localVideoRef} autoPlay muted playsInline className="video-element" />
         </div>
 
         <div className="video-card remote">
           <div className="video-label">Remote Participant</div>
+          <div className="video-status">
+            {remoteParticipant && remoteParticipant.micEnabled === false && (
+              <span className="video-status-pill">
+                <FiMicOff /> Muted
+              </span>
+            )}
+            {remoteParticipant && remoteParticipant.cameraEnabled === false && (
+              <span className="video-status-pill">
+                <FiVideoOff /> Camera Off
+              </span>
+            )}
+          </div>
           <video ref={remoteVideoRef} autoPlay playsInline className="video-element" />
           {participants.length === 0 && <div className="waiting-overlay">Waiting for other participant...</div>}
         </div>
