@@ -26,11 +26,53 @@ const pool = new Pool({
 });
 
 let sharedClientPromise = null;
+
+const isConnectionError = (err) => {
+  const message = String(err?.message || '').toLowerCase();
+  return (
+    message.includes('connection terminated unexpectedly') ||
+    message.includes('connection terminated') ||
+    message.includes('client has encountered a connection error') ||
+    message.includes('connection ended unexpectedly') ||
+    err?.code === '57P01'
+  );
+};
+
+const resetSharedClient = () => {
+  sharedClientPromise = null;
+};
+
 const getClient = async () => {
   if (!sharedClientPromise) {
-    sharedClientPromise = pool.connect();
+    sharedClientPromise = pool.connect().then((client) => {
+      client.on('error', (err) => {
+        console.error('PostgreSQL client error:', err.message);
+        resetSharedClient();
+      });
+      client.on('end', () => {
+        resetSharedClient();
+      });
+      return client;
+    }).catch((err) => {
+      resetSharedClient();
+      throw err;
+    });
   }
   return sharedClientPromise;
+};
+
+const queryWithRetry = async (q, retried = false) => {
+  try {
+    const client = await getClient();
+    return await client.query(q.text, q.values);
+  } catch (err) {
+    if (!retried && isConnectionError(err)) {
+      resetSharedClient();
+      const client = await getClient();
+      return client.query(q.text, q.values);
+    }
+    throw err;
+  }
 };
 
 const toPgSql = (sql, params = []) => {
@@ -106,8 +148,7 @@ const normalizeRowKeys = (row) => {
 const db = {
   query: async (sql, params = []) => {
     const q = toPgSql(sql, params);
-    const client = await getClient();
-    const result = await client.query(q.text, q.values);
+    const result = await queryWithRetry(q);
     return {
       ...result,
       rows: Array.isArray(result.rows) ? result.rows.map(normalizeRowKeys) : result.rows
@@ -117,8 +158,7 @@ const db = {
   run(sql, params, callback) {
     const { values, cb } = normalizeArgs(params, callback);
     const q = toPgSql(sql, values);
-    getClient()
-      .then((client) => client.query(q.text, q.values))
+    queryWithRetry(q)
       .then((result) => {
         if (cb) cb.call({ changes: result.rowCount || 0, lastID: null }, null);
       })
@@ -130,8 +170,7 @@ const db = {
   get(sql, params, callback) {
     const { values, cb } = normalizeArgs(params, callback);
     const q = toPgSql(sql, values);
-    getClient()
-      .then((client) => client.query(q.text, q.values))
+    queryWithRetry(q)
       .then((result) => {
         const row = result.rows && result.rows.length > 0 ? normalizeRowKeys(result.rows[0]) : undefined;
         if (cb) cb(null, row);
@@ -144,8 +183,7 @@ const db = {
   all(sql, params, callback) {
     const { values, cb } = normalizeArgs(params, callback);
     const q = toPgSql(sql, values);
-    getClient()
-      .then((client) => client.query(q.text, q.values))
+    queryWithRetry(q)
       .then((result) => {
         if (cb) cb(null, (result.rows || []).map(normalizeRowKeys));
       })
