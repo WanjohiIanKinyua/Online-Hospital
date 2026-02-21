@@ -25,7 +25,11 @@ const pool = new Pool({
   ssl: hasValidDatabaseUrl ? { rejectUnauthorized: false } : false
 });
 
-let sharedClientPromise = null;
+pool.on('error', (err) => {
+  console.error('PostgreSQL pool error:', err.message);
+});
+
+let transactionClient = null;
 
 const isConnectionError = (err) => {
   const message = String(err?.message || '').toLowerCase();
@@ -38,39 +42,56 @@ const isConnectionError = (err) => {
   );
 };
 
-const resetSharedClient = () => {
-  sharedClientPromise = null;
+const isBeginTransaction = (text) => /^\s*BEGIN(\s+TRANSACTION)?\s*;?\s*$/i.test(text);
+const isCommitTransaction = (text) => /^\s*COMMIT\s*;?\s*$/i.test(text);
+const isRollbackTransaction = (text) => /^\s*ROLLBACK\s*;?\s*$/i.test(text);
+
+const clearTransactionClient = () => {
+  if (transactionClient) {
+    transactionClient.release();
+    transactionClient = null;
+  }
 };
 
-const getClient = async () => {
-  if (!sharedClientPromise) {
-    sharedClientPromise = pool.connect().then((client) => {
-      client.on('error', (err) => {
-        console.error('PostgreSQL client error:', err.message);
-        resetSharedClient();
-      });
-      client.on('end', () => {
-        resetSharedClient();
-      });
-      return client;
-    }).catch((err) => {
-      resetSharedClient();
-      throw err;
+const ensureTransactionClient = async () => {
+  if (!transactionClient) {
+    transactionClient = await pool.connect();
+    transactionClient.on('error', (err) => {
+      console.error('PostgreSQL transaction client error:', err.message);
+      clearTransactionClient();
     });
   }
-  return sharedClientPromise;
+  return transactionClient;
 };
 
 const queryWithRetry = async (q, retried = false) => {
+  const text = q.text || '';
+
   try {
-    const client = await getClient();
-    return await client.query(q.text, q.values);
+    if (isBeginTransaction(text)) {
+      const client = await ensureTransactionClient();
+      return await client.query(q.text, q.values);
+    }
+
+    if (transactionClient) {
+      const result = await transactionClient.query(q.text, q.values);
+      if (isCommitTransaction(text) || isRollbackTransaction(text)) {
+        clearTransactionClient();
+      }
+      return result;
+    }
+
+    return await pool.query(q.text, q.values);
   } catch (err) {
     if (!retried && isConnectionError(err)) {
-      resetSharedClient();
-      const client = await getClient();
-      return client.query(q.text, q.values);
+      clearTransactionClient();
+      return queryWithRetry(q, true);
     }
+
+    if (isCommitTransaction(text) || isRollbackTransaction(text)) {
+      clearTransactionClient();
+    }
+
     throw err;
   }
 };
