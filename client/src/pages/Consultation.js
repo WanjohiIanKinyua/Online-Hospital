@@ -36,6 +36,7 @@ function Consultation() {
   const roomId = `appointment-${appointmentId}`;
   const isAdmin = userRole === 'admin';
   const offerRetryTimersRef = useRef({});
+  const endRedirectTimerRef = useRef(null);
   const remoteParticipant = participants[0] || null;
 
   useEffect(() => {
@@ -169,9 +170,13 @@ function Consultation() {
         setMeetingEnded(true);
         setError(`Meeting ended by ${endedBy}.`);
         if (isAdmin) {
-          setTimeout(() => {
+          endRedirectTimerRef.current = setTimeout(() => {
             navigate('/admin/doctor-notes');
           }, 400);
+        } else {
+          endRedirectTimerRef.current = setTimeout(() => {
+            navigate('/dashboard');
+          }, 1200);
         }
       });
     } catch (mediaError) {
@@ -254,6 +259,11 @@ function Consultation() {
   };
 
   const cleanupMeeting = () => {
+    if (endRedirectTimerRef.current) {
+      clearTimeout(endRedirectTimerRef.current);
+      endRedirectTimerRef.current = null;
+    }
+
     Object.keys(offerRetryTimersRef.current).forEach((socketId) => {
       clearTimeout(offerRetryTimersRef.current[socketId]);
       delete offerRetryTimersRef.current[socketId];
