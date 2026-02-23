@@ -40,6 +40,13 @@
   font-weight: 600;
 }
 
+.general-chat-note {
+  margin-top: 0.2rem;
+  color: #0c4a6e;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
 .btn-start-enquiry {
   width: 100%;
   border: none;

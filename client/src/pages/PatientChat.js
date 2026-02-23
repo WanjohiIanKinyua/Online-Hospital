@@ -161,6 +161,11 @@ function PatientChat() {
     }
   };
 
+  const openGeneralChat = () => {
+    setSelectedAppointmentId(GENERAL_THREAD_ID);
+    setMessageInput('');
+  };
+
   if (loading) {
     return (
       <DashboardLayout role="patient">
@@ -177,17 +182,18 @@ function PatientChat() {
           <div className="general-chat-highlight">
             <div className="general-chat-title">General Enquiries</div>
             <div className="general-chat-subtitle">No appointment needed</div>
+            <div className="general-chat-note">Separate from booked appointment chats</div>
           </div>
           <button
             type="button"
             className="btn-start-enquiry"
-            onClick={() => setSelectedAppointmentId(GENERAL_THREAD_ID)}
+            onClick={openGeneralChat}
           >
-            + Start New Conversation
+            + Start New Chat (General)
           </button>
           <button
             className={`chat-thread ${selectedAppointmentId === GENERAL_THREAD_ID ? 'active' : ''}`}
-            onClick={() => setSelectedAppointmentId(GENERAL_THREAD_ID)}
+            onClick={openGeneralChat}
           >
             <div className="chat-thread-title-row">
               <span className="chat-thread-title">General Enquiries</span>
@@ -226,7 +232,7 @@ function PatientChat() {
               <button
                 type="button"
                 className="backup-link-btn"
-                onClick={() => setSelectedAppointmentId(GENERAL_THREAD_ID)}
+                onClick={openGeneralChat}
               >
                 Start New Enquiry
               </button>
