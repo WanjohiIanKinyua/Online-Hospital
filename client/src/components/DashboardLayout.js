@@ -42,7 +42,8 @@ export function DashboardLayout({ children, role = 'patient' }) {
     {
       to: '/chat',
       icon: FiMessageSquare,
-      label: unreadChatCount > 0 ? `Chat Room (${unreadChatCount} unread messages)` : 'Chat Room'
+      label: 'Chat Room',
+      showUnreadBadge: true
     },
     { to: '/prescriptions', icon: FiFileText, label: 'Prescriptions' },
     { to: '/profile', icon: FiSettings, label: 'My Profile' }
@@ -58,7 +59,8 @@ export function DashboardLayout({ children, role = 'patient' }) {
     {
       to: '/admin/chat',
       icon: FiMessageSquare,
-      label: unreadChatCount > 0 ? `Chat Room (${unreadChatCount} unread messages)` : 'Chat Room'
+      label: 'Chat Room',
+      showUnreadBadge: true
     },
     { to: '/admin/appointments', icon: FiCalendar, label: 'Appointments' },
     { to: '/admin/patients', icon: FiUsers, label: 'Patients' }
@@ -79,7 +81,18 @@ export function DashboardLayout({ children, role = 'patient' }) {
           : Number(response.data?.unreadFromAdmin || response.data?.unreadTotal || 0);
         setUnreadChatCount(count);
       } catch (error) {
-        // no-op
+        try {
+          const fallbackResponse = await axios.get(`${API_BASE_URL}/api/chat/appointments`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const fallbackCount = (fallbackResponse.data || []).reduce(
+            (sum, apt) => sum + Number(apt.unreadCount || 0),
+            0
+          );
+          setUnreadChatCount(fallbackCount);
+        } catch (fallbackError) {
+          setUnreadChatCount(0);
+        }
       }
     };
 
@@ -126,7 +139,10 @@ export function DashboardLayout({ children, role = 'patient' }) {
               onClick={() => setSidebarOpen(false)}
             >
               <link.icon className="nav-icon" />
-              <span>{link.label}</span>
+              <span className="nav-label">{link.label}</span>
+              {link.showUnreadBadge && unreadChatCount > 0 && (
+                <span className="nav-unread-badge">{unreadChatCount}</span>
+              )}
             </Link>
           ))}
         </nav>
