@@ -34,6 +34,15 @@
   margin-bottom: 0.75rem;
 }
 
+.chat-section-title {
+  margin: 0.2rem 0 0.45rem;
+  font-size: 0.76rem;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
 .chat-thread {
   width: 100%;
   text-align: left;

@@ -4,9 +4,12 @@ import DashboardLayout from '../components/DashboardLayout';
 import '../styles/ChatRoom.css';
 import { API_BASE_URL } from '../config/api';
 
+const GENERAL_THREAD_ID = 'general-enquiries';
+
 function PatientChat() {
   const token = localStorage.getItem('token');
   const [appointments, setAppointments] = useState([]);
+  const [generalThread, setGeneralThread] = useState(null);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState('');
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
@@ -15,23 +18,33 @@ function PatientChat() {
   const messagesContainerRef = useRef(null);
 
   const selectedAppointment = useMemo(
-    () => appointments.find((a) => a.id === selectedAppointmentId),
+    () => appointments.find((a) => a.id === selectedAppointmentId && selectedAppointmentId !== GENERAL_THREAD_ID),
     [appointments, selectedAppointmentId]
   );
 
   useEffect(() => {
     loadAppointments();
+    loadGeneralThread();
   },
   // eslint-disable-next-line react-hooks/exhaustive-deps
   []);
 
   useEffect(() => {
     if (!selectedAppointmentId) return;
-    loadMessages(selectedAppointmentId);
+    if (selectedAppointmentId === GENERAL_THREAD_ID) {
+      loadGeneralMessages();
+    } else {
+      loadMessages(selectedAppointmentId);
+    }
 
     const intervalId = setInterval(() => {
-      loadMessages(selectedAppointmentId);
+      if (selectedAppointmentId === GENERAL_THREAD_ID) {
+        loadGeneralMessages();
+      } else {
+        loadMessages(selectedAppointmentId);
+      }
       loadAppointments(false);
+      loadGeneralThread();
     }, 5000);
 
     return () => clearInterval(intervalId);
@@ -47,8 +60,8 @@ function PatientChat() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAppointments(response.data);
-      if (!selectedAppointmentId && response.data.length > 0) {
-        setSelectedAppointmentId(response.data[0].id);
+      if (!selectedAppointmentId) {
+        setSelectedAppointmentId(GENERAL_THREAD_ID);
       }
     } catch (error) {
       // no-op
@@ -68,6 +81,28 @@ function PatientChat() {
     }
   };
 
+  const loadGeneralThread = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/chat/general/threads`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setGeneralThread(response.data?.[0] || null);
+    } catch (error) {
+      setGeneralThread(null);
+    }
+  };
+
+  const loadGeneralMessages = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/chat/general/messages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessages(response.data);
+    } catch (error) {
+      // no-op
+    }
+  };
+
   useEffect(() => {
     if (!messagesContainerRef.current) return;
     messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
@@ -77,14 +112,27 @@ function PatientChat() {
     if (!selectedAppointmentId || !messageInput.trim()) return;
 
     try {
-      await axios.post(
-        `${API_BASE_URL}/api/chat/appointments/${selectedAppointmentId}/messages`,
-        { message: messageInput },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      if (selectedAppointmentId === GENERAL_THREAD_ID) {
+        await axios.post(
+          `${API_BASE_URL}/api/chat/general/messages`,
+          { message: messageInput },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await axios.post(
+          `${API_BASE_URL}/api/chat/appointments/${selectedAppointmentId}/messages`,
+          { message: messageInput },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
       setMessageInput('');
-      await loadMessages(selectedAppointmentId);
+      if (selectedAppointmentId === GENERAL_THREAD_ID) {
+        await loadGeneralMessages();
+      } else {
+        await loadMessages(selectedAppointmentId);
+      }
       await loadAppointments(false);
+      await loadGeneralThread();
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to send message');
     }
@@ -118,7 +166,22 @@ function PatientChat() {
     <DashboardLayout role="patient">
       <div className="chat-page">
         <div className="chat-sidebar">
-          <h3>Your Appointment Chats</h3>
+          <h3>Your Chats</h3>
+          <button
+            className={`chat-thread ${selectedAppointmentId === GENERAL_THREAD_ID ? 'active' : ''}`}
+            onClick={() => setSelectedAppointmentId(GENERAL_THREAD_ID)}
+          >
+            <div className="chat-thread-title-row">
+              <span className="chat-thread-title">General Enquiries</span>
+              {Number(generalThread?.unreadCount || 0) > 0 && (
+                <span className="chat-unread-badge">{Number(generalThread?.unreadCount || 0)}</span>
+              )}
+            </div>
+            <div className="chat-thread-sub">
+              {generalThread?.lastMessage || 'Ask any question without booking an appointment.'}
+            </div>
+          </button>
+
           {appointments.length === 0 ? (
             <p className="chat-empty">No appointments available for chat.</p>
           ) : (
@@ -139,7 +202,7 @@ function PatientChat() {
 
         <div className="chat-main">
           <div className="chat-main-header">
-            <h2>Doctor Chat Room</h2>
+            <h2>{selectedAppointmentId === GENERAL_THREAD_ID ? 'General Enquiries Chat' : 'Doctor Chat Room'}</h2>
             {selectedAppointment && (
               <div className="chat-main-meta">
                 <span>Approval: {selectedAppointment.approvalStatus || 'pending'}</span>

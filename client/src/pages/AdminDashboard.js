@@ -29,7 +29,7 @@ function AdminDashboard() {
     return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleDateString();
   };
 
-  const loadOverview = useCallback(async () => {
+  const loadOverview = useCallback(async (isFreshLogin = false) => {
     try {
       const [statsRes, appointmentsRes, patientsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/admin/dashboard`, {
@@ -46,6 +46,25 @@ function AdminDashboard() {
       setStats(statsRes.data);
       setAppointments(appointmentsRes.data);
       setPatients(patientsRes.data);
+
+      if (isFreshLogin) {
+        let unreadMessages = 0;
+        try {
+          const unreadRes = await axios.get(`${API_BASE_URL}/api/chat/unread-summary`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          unreadMessages = Number(unreadRes.data?.unreadFromPatients || unreadRes.data?.unreadTotal || 0);
+        } catch (error) {
+          unreadMessages = 0;
+        }
+
+        const newBookedAppointments = (appointmentsRes.data || []).filter(
+          (apt) => apt.approvalStatus === 'pending' || apt.status === 'pending'
+        ).length;
+
+        const popupMessage = `You have ${unreadMessages} unread message${unreadMessages === 1 ? '' : 's'} and ${newBookedAppointments} booked appointment${newBookedAppointments === 1 ? '' : 's'}.`;
+        window.alert(popupMessage);
+      }
     } catch (error) {
       console.error('Failed to load admin overview:', error);
     } finally {
@@ -54,13 +73,14 @@ function AdminDashboard() {
   }, [token]);
 
   useEffect(() => {
-    if (localStorage.getItem('loginSuccess') === '1') {
+    const isFreshLogin = localStorage.getItem('loginSuccess') === '1';
+    if (isFreshLogin) {
       setShowLoginSuccess(true);
       localStorage.removeItem('loginSuccess');
       setTimeout(() => setShowLoginSuccess(false), 3000);
     }
 
-    loadOverview();
+    loadOverview(isFreshLogin);
   }, [loadOverview]);
 
   const downloadIncomeReport = async () => {

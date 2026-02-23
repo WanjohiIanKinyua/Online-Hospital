@@ -20,7 +20,8 @@ function PatientDashboard() {
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem('loginSuccess') === '1') {
+    const isFreshLogin = localStorage.getItem('loginSuccess') === '1';
+    if (isFreshLogin) {
       setShowLoginSuccess(true);
       localStorage.removeItem('loginSuccess');
       setTimeout(() => setShowLoginSuccess(false), 3000);
@@ -60,6 +61,25 @@ function PatientDashboard() {
           totalPayments: appts.length,
           pendingPrescriptions: pending
         });
+
+        if (isFreshLogin) {
+          let unreadFromAdmin = 0;
+          try {
+            const unreadRes = await axios.get(`${API_BASE_URL}/api/chat/unread-summary`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            unreadFromAdmin = Number(unreadRes.data?.unreadFromAdmin || unreadRes.data?.unreadTotal || 0);
+          } catch (error) {
+            unreadFromAdmin = 0;
+          }
+
+          const approvedBookings = appts.filter(
+            (a) => a.approvalStatus === 'approved' && a.status !== 'cancelled'
+          ).length;
+
+          const popupMessage = `You have received ${unreadFromAdmin} new message${unreadFromAdmin === 1 ? '' : 's'} from admin and ${approvedBookings} booking${approvedBookings === 1 ? '' : 's'} approved.`;
+          window.alert(popupMessage);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {

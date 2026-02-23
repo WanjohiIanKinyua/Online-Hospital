@@ -368,6 +368,28 @@ const initializeDatabase = async () => {
     `);
 
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS general_chat_messages (
+        id TEXT PRIMARY KEY,
+        patientId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        senderId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        senderRole TEXT NOT NULL,
+        senderName TEXT NOT NULL,
+        message TEXT NOT NULL,
+        createdAt TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS general_chat_reads (
+        id TEXT PRIMARY KEY,
+        patientId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        lastReadAt TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(patientId, userId)
+      )
+    `);
+
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS patient_notes (
         id TEXT PRIMARY KEY,
         doctorId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
