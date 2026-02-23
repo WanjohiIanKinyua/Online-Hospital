@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
   FiLogOut,
   FiLayout,
@@ -18,28 +19,34 @@ import {
   FiMenu,
   FiX
 } from 'react-icons/fi';
-import { useState } from 'react';
 import '../styles/DashboardLayout.css';
+import { API_BASE_URL } from '../config/api';
 
 export function DashboardLayout({ children, role = 'patient' }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unreadFromAdmin, setUnreadFromAdmin] = useState(0);
   const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
+  const token = localStorage.getItem('token');
   const rawUserName = localStorage.getItem('userName');
   const userName =
     rawUserName && rawUserName !== 'undefined' && rawUserName !== 'null'
       ? rawUserName
       : (userEmail.split('@')[0] || 'User');
 
-  const patientLinks = [
+  const patientLinks = useMemo(() => ([
     { to: '/dashboard', icon: FiLayout, label: 'Overview' },
     { to: '/book-appointment', icon: FiPlusSquare, label: 'Book Appointment' },
     { to: '/appointments', icon: FiCalendar, label: 'Booked Appointments' },
-    { to: '/chat', icon: FiMessageSquare, label: 'Chat Room' },
+    {
+      to: '/chat',
+      icon: FiMessageSquare,
+      label: unreadFromAdmin > 0 ? `Chat Room (${unreadFromAdmin} unread from admin)` : 'Chat Room'
+    },
     { to: '/prescriptions', icon: FiFileText, label: 'Prescriptions' },
     { to: '/profile', icon: FiSettings, label: 'My Profile' }
-  ];
+  ]), [unreadFromAdmin]);
 
   const adminLinks = [
     { to: '/admin', icon: FiBarChart2, label: 'Overview' },
@@ -54,6 +61,25 @@ export function DashboardLayout({ children, role = 'patient' }) {
   ];
 
   const links = role === 'admin' ? adminLinks : patientLinks;
+
+  useEffect(() => {
+    if (role !== 'patient' || !token) return undefined;
+
+    const loadUnreadSummary = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/chat/unread-summary`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setUnreadFromAdmin(Number(response.data?.unreadFromAdmin || 0));
+      } catch (error) {
+        // no-op
+      }
+    };
+
+    loadUnreadSummary();
+    const intervalId = setInterval(loadUnreadSummary, 10000);
+    return () => clearInterval(intervalId);
+  }, [role, token]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');

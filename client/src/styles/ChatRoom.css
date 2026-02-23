@@ -19,6 +19,21 @@
   color: #1f2937;
 }
 
+.chat-unread-summary {
+  margin: 0 0 0.6rem;
+  color: #0f766e;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.chat-search-input {
+  width: 100%;
+  padding: 0.6rem 0.65rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
 .chat-thread {
   width: 100%;
   text-align: left;
@@ -28,6 +43,27 @@
   padding: 0.75rem;
   margin-bottom: 0.6rem;
   cursor: pointer;
+}
+
+.chat-thread-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.chat-unread-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .chat-thread.active {
@@ -47,6 +83,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.chat-thread-unread-text {
+  margin-top: 0.35rem;
+  font-size: 0.74rem;
+  color: #be123c;
+  font-weight: 600;
 }
 
 .chat-main {

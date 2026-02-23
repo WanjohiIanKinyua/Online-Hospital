@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+router.get('/unread-summary', chatController.getUnreadSummary);
 router.get('/appointments', chatController.getChatAppointments);
 router.get('/appointments/:appointmentId/messages', chatController.getAppointmentMessages);
 router.post('/appointments/:appointmentId/messages', chatController.sendAppointmentMessage);

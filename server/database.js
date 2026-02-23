@@ -154,6 +154,8 @@ const keyMap = {
   senderid: 'senderId',
   senderrole: 'senderRole',
   sendername: 'senderName',
+  lastreadat: 'lastReadAt',
+  unreadcount: 'unreadCount',
   doctorid: 'doctorId',
   patientage: 'patientAge',
   notecontent: 'noteContent',
@@ -352,6 +354,16 @@ const initializeDatabase = async () => {
         senderName TEXT NOT NULL,
         message TEXT NOT NULL,
         createdAt TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS chat_reads (
+        id TEXT PRIMARY KEY,
+        appointmentId TEXT NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+        userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        lastReadAt TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(appointmentId, userId)
       )
     `);
 

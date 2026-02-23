@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import DashboardLayout from '../components/DashboardLayout';
 import '../styles/ChatRoom.css';
@@ -12,6 +12,7 @@ function PatientChat() {
   const [messageInput, setMessageInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedBackupLink, setSelectedBackupLink] = useState('');
+  const messagesContainerRef = useRef(null);
 
   const selectedAppointment = useMemo(
     () => appointments.find((a) => a.id === selectedAppointmentId),
@@ -66,6 +67,11 @@ function PatientChat() {
       // no-op
     }
   };
+
+  useEffect(() => {
+    if (!messagesContainerRef.current) return;
+    messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+  }, [messages, selectedAppointmentId]);
 
   const sendMessage = async () => {
     if (!selectedAppointmentId || !messageInput.trim()) return;
@@ -150,7 +156,7 @@ function PatientChat() {
             )}
           </div>
 
-          <div className="chat-messages">
+          <div className="chat-messages" ref={messagesContainerRef}>
             {messages.length === 0 ? (
               <div className="chat-empty">Start the conversation with your doctor.</div>
             ) : (
@@ -229,4 +235,3 @@ function PatientChat() {
 }
 
 export default PatientChat;
-

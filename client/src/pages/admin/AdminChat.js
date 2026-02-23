@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import DashboardLayout from '../../components/DashboardLayout';
 import '../../styles/ChatRoom.css';
@@ -7,15 +7,28 @@ import { API_BASE_URL } from '../../config/api';
 function AdminChat() {
   const token = localStorage.getItem('token');
   const [appointments, setAppointments] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedAppointmentId, setSelectedAppointmentId] = useState('');
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const [fallbackLinkInput, setFallbackLinkInput] = useState('');
   const [loading, setLoading] = useState(true);
+  const messagesContainerRef = useRef(null);
 
   const selectedAppointment = useMemo(
     () => appointments.find((a) => a.id === selectedAppointmentId),
     [appointments, selectedAppointmentId]
+  );
+
+  const filteredAppointments = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return appointments;
+    return appointments.filter((apt) => String(apt.patientName || '').toLowerCase().includes(query));
+  }, [appointments, searchTerm]);
+
+  const totalUnread = useMemo(
+    () => appointments.reduce((sum, apt) => sum + Number(apt.unreadCount || 0), 0),
+    [appointments]
   );
 
   useEffect(() => {
@@ -26,7 +39,11 @@ function AdminChat() {
 
   useEffect(() => {
     if (!selectedAppointmentId) return;
-    loadMessages(selectedAppointmentId);
+    const loadSelectedThread = async () => {
+      await loadMessages(selectedAppointmentId);
+      await loadAppointments(false);
+    };
+    loadSelectedThread();
     setFallbackLinkInput(selectedAppointment?.meetingLink || '');
 
     const intervalId = setInterval(() => {
@@ -71,6 +88,11 @@ function AdminChat() {
       // no-op
     }
   };
+
+  useEffect(() => {
+    if (!messagesContainerRef.current) return;
+    messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+  }, [messages, selectedAppointmentId]);
 
   const sendMessage = async () => {
     if (!selectedAppointmentId || !messageInput.trim()) return;
@@ -122,19 +144,41 @@ function AdminChat() {
       <div className="chat-page">
         <div className="chat-sidebar">
           <h3>Patient Chats</h3>
-          {appointments.length === 0 ? (
+          <p className="chat-unread-summary">
+            Unread messages: {totalUnread}
+          </p>
+          <input
+            type="text"
+            className="chat-search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search patient name..."
+          />
+          {filteredAppointments.length === 0 ? (
             <p className="chat-empty">No appointment chats available.</p>
           ) : (
-            appointments.map((apt) => (
+            filteredAppointments.map((apt) => (
               <button
                 key={apt.id}
                 className={`chat-thread ${selectedAppointmentId === apt.id ? 'active' : ''}`}
                 onClick={() => setSelectedAppointmentId(apt.id)}
               >
-                <div className="chat-thread-title">{apt.patientName}</div>
+                <div className="chat-thread-title-row">
+                  <span className="chat-thread-title">{apt.patientName}</span>
+                  {Number(apt.unreadCount || 0) > 0 && (
+                    <span className="chat-unread-badge">
+                      {Number(apt.unreadCount || 0)}
+                    </span>
+                  )}
+                </div>
                 <div className="chat-thread-sub">
                   {new Date(apt.appointmentDate).toLocaleDateString()} {apt.appointmentTime}
                 </div>
+                {Number(apt.unreadCount || 0) > 0 && (
+                  <div className="chat-thread-unread-text">
+                    {Number(apt.unreadCount || 0)} unread message{Number(apt.unreadCount || 0) > 1 ? 's' : ''}
+                  </div>
+                )}
               </button>
             ))
           )}
@@ -160,7 +204,7 @@ function AdminChat() {
             <button type="button" onClick={shareFallbackLink}>Share Backup Link</button>
           </div>
 
-          <div className="chat-messages">
+          <div className="chat-messages" ref={messagesContainerRef}>
             {messages.length === 0 ? (
               <div className="chat-empty">No messages in this conversation yet.</div>
             ) : (
@@ -193,4 +237,3 @@ function AdminChat() {
 }
 
 export default AdminChat;
-

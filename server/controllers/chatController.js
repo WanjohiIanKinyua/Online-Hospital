@@ -29,7 +29,7 @@ const getSenderName = (user, cb) => {
 
 exports.getChatAppointments = (req, res) => {
   const isAdmin = req.user.role === 'admin';
-  const params = [];
+  const params = [req.user.id, req.user.role];
 
   let query = `
     SELECT
@@ -55,7 +55,17 @@ exports.getChatAppointments = (req, res) => {
         WHERE cm.appointmentId = a.id
         ORDER BY cm.createdat DESC
         LIMIT 1
-      ) AS lastMessageAt
+      ) AS lastMessageAt,
+      (
+        SELECT COUNT(*)
+        FROM chat_messages cm
+        LEFT JOIN chat_reads cr
+          ON cr.appointmentId = a.id
+          AND cr.userId = ?
+        WHERE cm.appointmentId = a.id
+          AND cm.senderRole != ?
+          AND cm.createdat > COALESCE(cr.lastReadAt, TO_TIMESTAMP(0))
+      ) AS unreadCount
     FROM appointments a
     JOIN users u ON a.patientId = u.id
   `;
@@ -93,7 +103,16 @@ exports.getAppointmentMessages = (req, res) => {
         if (err) {
           return res.status(500).json({ error: 'Failed to fetch messages' });
         }
-        return res.status(200).json(messages);
+        db.run(
+          `
+            INSERT INTO chat_reads (id, appointmentId, userId, lastReadAt)
+            VALUES (?, ?, ?, NOW())
+            ON CONFLICT (appointmentId, userId)
+            DO UPDATE SET lastReadAt = NOW()
+          `,
+          [uuidv4(), appointmentId, req.user.id],
+          () => res.status(200).json(messages)
+        );
       }
     );
   });
@@ -176,5 +195,42 @@ exports.shareFallbackMeetingLink = (req, res) => {
         );
       }
     );
+  });
+};
+
+exports.getUnreadSummary = (req, res) => {
+  const userId = req.user.id;
+  const isAdmin = req.user.role === 'admin';
+  const senderRoleToCount = isAdmin ? 'patient' : 'admin';
+
+  let query = `
+    SELECT COUNT(*) AS unreadTotal
+    FROM chat_messages cm
+    JOIN appointments a ON a.id = cm.appointmentId
+    LEFT JOIN chat_reads cr
+      ON cr.appointmentId = a.id
+      AND cr.userId = ?
+    WHERE cm.senderRole = ?
+      AND cm.createdat > COALESCE(cr.lastReadAt, TO_TIMESTAMP(0))
+  `;
+
+  const params = [userId, senderRoleToCount];
+
+  if (!isAdmin) {
+    query += ' AND a.patientId = ?';
+    params.push(userId);
+  }
+
+  db.get(query, params, (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to load unread summary' });
+    }
+
+    const unreadTotal = Number(row?.unreadTotal || 0);
+    return res.status(200).json({
+      unreadTotal,
+      unreadFromAdmin: !isAdmin ? unreadTotal : undefined,
+      unreadFromPatients: isAdmin ? unreadTotal : undefined
+    });
   });
 };
