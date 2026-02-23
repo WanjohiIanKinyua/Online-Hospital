@@ -8,6 +8,7 @@ import { API_BASE_URL } from '../../config/api';
 
 function AdminBookAppointment() {
   const [patients, setPatients] = useState([]);
+  const [patientSearch, setPatientSearch] = useState('');
   const [doctors, setDoctors] = useState([]);
   const [bookableSlots, setBookableSlots] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +107,11 @@ function AdminBookAppointment() {
   };
 
   const today = new Date().toISOString().split('T')[0];
+  const filteredPatients = patients.filter((patient) => {
+    const query = patientSearch.trim().toLowerCase();
+    if (!query) return true;
+    return String(patient.fullName || '').toLowerCase().includes(query);
+  });
 
   if (loading) {
     return (
@@ -130,15 +136,32 @@ function AdminBookAppointment() {
             <form onSubmit={handleSubmit}>
               <div className="form-row">
                 <div className="form-group">
+                  <label htmlFor="patientSearch">Search Patient By Name</label>
+                  <input
+                    type="text"
+                    id="patientSearch"
+                    name="patientSearch"
+                    value={patientSearch}
+                    onChange={(e) => setPatientSearch(e.target.value)}
+                    placeholder="Type patient name..."
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
                   <label htmlFor="patientId">Patient</label>
                   <select id="patientId" name="patientId" value={formData.patientId} onChange={handleChange}>
                     <option value="">Select patient</option>
-                    {patients.map((patient) => (
+                    {filteredPatients.map((patient) => (
                       <option key={patient.id} value={patient.id}>
                         {patient.fullName} ({patient.email})
                       </option>
                     ))}
                   </select>
+                  {patientSearch.trim() && filteredPatients.length === 0 && (
+                    <p className="text-muted">No patients found for "{patientSearch}".</p>
+                  )}
                 </div>
 
                 <div className="form-group">

@@ -607,6 +607,28 @@ exports.toggleDoctorStatus = (req, res) => {
   );
 };
 
+exports.deleteDoctor = (req, res) => {
+  const { doctorId } = req.params;
+
+  if (!doctorId) {
+    return res.status(400).json({ error: 'Doctor ID is required' });
+  }
+
+  db.run(
+    `DELETE FROM doctors WHERE id = ?`,
+    [doctorId],
+    function onDeleted(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to delete doctor' });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Doctor not found' });
+      }
+      return res.status(200).json({ message: 'Doctor deleted successfully' });
+    }
+  );
+};
+
 exports.updatePatient = (req, res) => {
   const { patientId } = req.params;
   const { fullName, email, password, phone, dateOfBirth, gender, address } = req.body;

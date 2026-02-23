@@ -15,6 +15,7 @@ router.put('/appointments/:appointmentId/approval', adminController.updateAppoin
 router.get('/doctors', adminController.getAllDoctors);
 router.post('/doctors', adminController.createDoctor);
 router.put('/doctors/:doctorId/status', adminController.toggleDoctorStatus);
+router.delete('/doctors/:doctorId', adminController.deleteDoctor);
 router.get('/patients', adminController.getAllPatients);
 router.post('/patients', adminController.createPatient);
 router.put('/patients/:patientId', adminController.updatePatient);

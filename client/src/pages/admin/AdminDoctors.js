@@ -3,7 +3,7 @@ import axios from 'axios';
 import DashboardLayout from '../../components/DashboardLayout';
 import '../../styles/ModernDashboard.css';
 import '../../styles/AdminManagement.css';
-import { FiPlus, FiToggleLeft, FiToggleRight } from 'react-icons/fi';
+import { FiPlus, FiToggleLeft, FiToggleRight, FiTrash2 } from 'react-icons/fi';
 import { API_BASE_URL } from '../../config/api';
 
 function AdminDoctors() {
@@ -77,6 +77,20 @@ function AdminDoctors() {
       await loadDoctors();
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to update doctor status');
+    }
+  };
+
+  const deleteDoctor = async (doctor) => {
+    const confirmed = window.confirm(`Delete ${doctor.fullName} permanently? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/api/admin/doctors/${doctor.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await loadDoctors();
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to delete doctor');
     }
   };
 
@@ -166,9 +180,18 @@ function AdminDoctors() {
                           </span>
                         </td>
                         <td>
-                          <button className="btn-small" onClick={() => toggleDoctor(doctor)}>
-                            {doctor.isActive ? <FiToggleRight size={14} /> : <FiToggleLeft size={14} />}
-                          </button>
+                          <div className="admin-actions">
+                            <button className="btn-small" onClick={() => toggleDoctor(doctor)} title="Toggle active status">
+                              {doctor.isActive ? <FiToggleRight size={14} /> : <FiToggleLeft size={14} />}
+                            </button>
+                            <button
+                              className="btn-small btn-danger"
+                              onClick={() => deleteDoctor(doctor)}
+                              title="Delete doctor permanently"
+                            >
+                              <FiTrash2 size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
