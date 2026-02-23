@@ -19,6 +19,22 @@
   color: #1f2937;
 }
 
+.btn-start-enquiry {
+  width: 100%;
+  border: none;
+  border-radius: 0.6rem;
+  background: #0ea5e9;
+  color: #ffffff;
+  padding: 0.6rem 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 0.75rem;
+}
+
+.btn-start-enquiry:hover {
+  background: #0284c7;
+}
+
 .chat-unread-summary {
   margin: 0 0 0.6rem;
   color: #0f766e;

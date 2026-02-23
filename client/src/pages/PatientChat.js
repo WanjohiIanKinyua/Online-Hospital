@@ -168,6 +168,13 @@ function PatientChat() {
         <div className="chat-sidebar">
           <h3>Your Chats</h3>
           <button
+            type="button"
+            className="btn-start-enquiry"
+            onClick={() => setSelectedAppointmentId(GENERAL_THREAD_ID)}
+          >
+            + Start New Enquiry Chat
+          </button>
+          <button
             className={`chat-thread ${selectedAppointmentId === GENERAL_THREAD_ID ? 'active' : ''}`}
             onClick={() => setSelectedAppointmentId(GENERAL_THREAD_ID)}
           >
@@ -203,6 +210,15 @@ function PatientChat() {
         <div className="chat-main">
           <div className="chat-main-header">
             <h2>{selectedAppointmentId === GENERAL_THREAD_ID ? 'General Enquiries Chat' : 'Doctor Chat Room'}</h2>
+            {selectedAppointmentId !== GENERAL_THREAD_ID && (
+              <button
+                type="button"
+                className="backup-link-btn"
+                onClick={() => setSelectedAppointmentId(GENERAL_THREAD_ID)}
+              >
+                Start New Enquiry
+              </button>
+            )}
             {selectedAppointment && (
               <div className="chat-main-meta">
                 <span>Approval: {selectedAppointment.approvalStatus || 'pending'}</span>
