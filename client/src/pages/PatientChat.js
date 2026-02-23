@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import DashboardLayout from '../components/DashboardLayout';
 import '../styles/ChatRoom.css';
@@ -16,6 +16,14 @@ function PatientChat() {
   const [loading, setLoading] = useState(true);
   const [selectedBackupLink, setSelectedBackupLink] = useState('');
   const messagesContainerRef = useRef(null);
+  const scrollToBottom = () => {
+    if (!messagesContainerRef.current) return;
+    const node = messagesContainerRef.current;
+    node.scrollTop = node.scrollHeight;
+    requestAnimationFrame(() => {
+      node.scrollTop = node.scrollHeight;
+    });
+  };
 
   const selectedAppointment = useMemo(
     () => appointments.find((a) => a.id === selectedAppointmentId && selectedAppointmentId !== GENERAL_THREAD_ID),
@@ -103,10 +111,9 @@ function PatientChat() {
     }
   };
 
-  useEffect(() => {
-    if (!messagesContainerRef.current) return;
-    messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-  }, [messages, selectedAppointmentId]);
+  useLayoutEffect(() => {
+    scrollToBottom();
+  }, [messages.length, selectedAppointmentId]);
 
   const sendMessage = async () => {
     if (!selectedAppointmentId || !messageInput.trim()) return;

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import DashboardLayout from '../../components/DashboardLayout';
 import '../../styles/ChatRoom.css';
@@ -17,6 +17,14 @@ function AdminChat() {
   const [fallbackLinkInput, setFallbackLinkInput] = useState('');
   const [loading, setLoading] = useState(true);
   const messagesContainerRef = useRef(null);
+  const scrollToBottom = () => {
+    if (!messagesContainerRef.current) return;
+    const node = messagesContainerRef.current;
+    node.scrollTop = node.scrollHeight;
+    requestAnimationFrame(() => {
+      node.scrollTop = node.scrollHeight;
+    });
+  };
 
   const selectedAppointment = useMemo(
     () => appointments.find((a) => a.id === selectedAppointmentId),
@@ -149,10 +157,9 @@ function AdminChat() {
     }
   };
 
-  useEffect(() => {
-    if (!messagesContainerRef.current) return;
-    messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-  }, [messages, selectedAppointmentId]);
+  useLayoutEffect(() => {
+    scrollToBottom();
+  }, [messages.length, selectedAppointmentId, selectedGeneralPatientId, selectedThreadType]);
 
   const sendMessage = async () => {
     if (!messageInput.trim()) return;
