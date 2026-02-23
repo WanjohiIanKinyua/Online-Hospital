@@ -5,6 +5,8 @@ import { FiEye, FiEyeOff } from 'react-icons/fi';
 import '../styles/AuthPages.css';
 import { API_BASE_URL } from '../config/api';
 
+const PASSWORD_POLICY_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/;
+
 function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -29,6 +31,11 @@ function ResetPassword() {
 
     if (newPassword !== confirmPassword) {
       setError('Passwords do not match.');
+      return;
+    }
+
+    if (!PASSWORD_POLICY_REGEX.test(newPassword)) {
+      setError('Password must be at least 6 characters and include 1 uppercase letter, 1 number, and 1 special character.');
       return;
     }
 

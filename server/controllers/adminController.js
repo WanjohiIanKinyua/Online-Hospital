@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
+const PASSWORD_POLICY_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/;
 
 const toMinutes = (timeString) => {
   const [h, m] = String(timeString || '').split(':').map(Number);
@@ -344,6 +345,12 @@ exports.createPatient = (req, res) => {
     return res.status(400).json({ error: 'Full name, email, and password are required' });
   }
 
+  if (!PASSWORD_POLICY_REGEX.test(String(password || ''))) {
+    return res.status(400).json({
+      error: 'Password must be at least 6 characters and include at least 1 uppercase letter, 1 number, and 1 special character'
+    });
+  }
+
   const patientId = uuidv4();
   const hashedPassword = bcrypt.hashSync(password, 10);
 
@@ -636,6 +643,12 @@ exports.updatePatient = (req, res) => {
   };
 
   if (password && password.trim()) {
+    if (!PASSWORD_POLICY_REGEX.test(password.trim())) {
+      return res.status(400).json({
+        error: 'Password must be at least 6 characters and include at least 1 uppercase letter, 1 number, and 1 special character'
+      });
+    }
+
     const hashedPassword = bcrypt.hashSync(password.trim(), 10);
     db.run(
       `UPDATE users

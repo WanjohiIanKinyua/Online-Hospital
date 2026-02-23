@@ -7,6 +7,7 @@ const db = require('../database');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
 const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000;
+const PASSWORD_POLICY_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/;
 
 const sendResetEmail = async ({ toEmail, resetLink }) => {
   const host = process.env.SMTP_HOST;
@@ -56,13 +57,20 @@ const sendResetEmail = async ({ toEmail, resetLink }) => {
 exports.register = (req, res) => {
   const { fullName, email, password, phone, dateOfBirth, gender, address } = req.body;
   const normalizedEmail = String(email || '').trim().toLowerCase();
+  const normalizedPassword = String(password || '');
 
-  if (!fullName || !normalizedEmail || !password) {
+  if (!fullName || !normalizedEmail || !normalizedPassword) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  if (!PASSWORD_POLICY_REGEX.test(normalizedPassword)) {
+    return res.status(400).json({
+      error: 'Password must be at least 6 characters and include at least 1 uppercase letter, 1 number, and 1 special character'
+    });
+  }
+
   // Hash password
-  const hashedPassword = bcrypt.hashSync(password, 10);
+  const hashedPassword = bcrypt.hashSync(normalizedPassword, 10);
   const userId = uuidv4();
 
   db.run(
@@ -215,8 +223,10 @@ exports.resetPassword = (req, res) => {
     return res.status(400).json({ error: 'Passwords do not match' });
   }
 
-  if (newPassword.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (!PASSWORD_POLICY_REGEX.test(newPassword)) {
+    return res.status(400).json({
+      error: 'Password must be at least 6 characters and include at least 1 uppercase letter, 1 number, and 1 special character'
+    });
   }
 
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');

@@ -5,6 +5,8 @@ import { FiEye, FiEyeOff } from 'react-icons/fi';
 import '../styles/AuthPages.css';
 import { API_BASE_URL } from '../config/api';
 
+const PASSWORD_POLICY_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/;
+
 function Register({ setIsAuthenticated, setUserRole }) {
   const [formData, setFormData] = useState({
     fullName: '',
@@ -37,6 +39,12 @@ function Register({ setIsAuthenticated, setUserRole }) {
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (!PASSWORD_POLICY_REGEX.test(formData.password)) {
+      setError('Password must be at least 6 characters and include 1 uppercase letter, 1 number, and 1 special character');
       setLoading(false);
       return;
     }
@@ -167,6 +175,7 @@ function Register({ setIsAuthenticated, setUserRole }) {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
+                minLength={6}
                 required
                 placeholder="Enter your password"
               />
@@ -191,6 +200,7 @@ function Register({ setIsAuthenticated, setUserRole }) {
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                minLength={6}
                 required
                 placeholder="Confirm your password"
               />
@@ -204,6 +214,9 @@ function Register({ setIsAuthenticated, setUserRole }) {
                 {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
               </button>
             </div>
+            <small className="text-muted">
+              Use at least 6 characters, including 1 uppercase letter, 1 number, and 1 special character.
+            </small>
           </div>
 
           <button type="submit" className="btn-primary" style={{ width: '100%' }} disabled={loading}>
