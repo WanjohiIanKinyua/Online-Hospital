@@ -167,12 +167,16 @@ function PatientChat() {
       <div className="chat-page">
         <div className="chat-sidebar">
           <h3>Your Chats</h3>
+          <div className="general-chat-highlight">
+            <div className="general-chat-title">General Enquiries</div>
+            <div className="general-chat-subtitle">No appointment needed</div>
+          </div>
           <button
             type="button"
             className="btn-start-enquiry"
             onClick={() => setSelectedAppointmentId(GENERAL_THREAD_ID)}
           >
-            + Start New Enquiry Chat
+            + Start New Conversation
           </button>
           <button
             className={`chat-thread ${selectedAppointmentId === GENERAL_THREAD_ID ? 'active' : ''}`}
@@ -189,6 +193,7 @@ function PatientChat() {
             </div>
           </button>
 
+          <p className="chat-section-title">Appointment Chats</p>
           {appointments.length === 0 ? (
             <p className="chat-empty">No appointments available for chat.</p>
           ) : (
@@ -237,7 +242,11 @@ function PatientChat() {
 
           <div className="chat-messages" ref={messagesContainerRef}>
             {messages.length === 0 ? (
-              <div className="chat-empty">Start the conversation with your doctor.</div>
+              <div className="chat-empty">
+                {selectedAppointmentId === GENERAL_THREAD_ID
+                  ? 'Start a new general conversation with the doctor/admin team.'
+                  : 'Start the conversation with your doctor.'}
+              </div>
             ) : (
               messages.map((msg) => (
                 <div key={msg.id} className={`chat-message ${msg.senderRole === 'patient' ? 'mine' : 'theirs'}`}>

@@ -19,6 +19,27 @@
   color: #1f2937;
 }
 
+.general-chat-highlight {
+  border: 1px solid #bae6fd;
+  background: #eff6ff;
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.55rem;
+}
+
+.general-chat-title {
+  font-weight: 800;
+  color: #075985;
+  font-size: 0.86rem;
+}
+
+.general-chat-subtitle {
+  margin-top: 0.1rem;
+  color: #0369a1;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
 .btn-start-enquiry {
   width: 100%;
   border: none;
