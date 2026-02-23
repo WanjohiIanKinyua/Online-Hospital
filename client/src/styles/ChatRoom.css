@@ -124,6 +124,16 @@
   color: #64748b;
 }
 
+.chat-header-unread {
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
 .backup-link-btn {
   padding: 0.4rem 0.65rem;
   border-radius: 0.45rem;

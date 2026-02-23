@@ -189,6 +189,9 @@ function AdminChat() {
             <h2>Doctor Response Room</h2>
             {selectedAppointment && (
               <div className="chat-main-meta">
+                <span className="chat-header-unread">
+                  You have {totalUnread} unread message{totalUnread === 1 ? '' : 's'}
+                </span>
                 <span>{selectedAppointment.patientName} ({selectedAppointment.patientEmail})</span>
               </div>
             )}
