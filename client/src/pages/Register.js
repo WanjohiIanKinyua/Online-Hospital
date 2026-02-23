@@ -19,6 +19,7 @@ function Register({ setIsAuthenticated, setUserRole }) {
     address: ''
   });
   const [error, setError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -26,6 +27,9 @@ function Register({ setIsAuthenticated, setUserRole }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'password' || name === 'confirmPassword') {
+      setPasswordError('');
+    }
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -36,15 +40,16 @@ function Register({ setIsAuthenticated, setUserRole }) {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setPasswordError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setPasswordError('Passwords do not match');
       setLoading(false);
       return;
     }
 
     if (!PASSWORD_POLICY_REGEX.test(formData.password)) {
-      setError('Password must be at least 6 characters and include 1 uppercase letter, 1 number, and 1 special character');
+      setPasswordError('Password must be at least 6 characters and include 1 uppercase letter, 1 number, and 1 special character');
       setLoading(false);
       return;
     }
@@ -167,6 +172,7 @@ function Register({ setIsAuthenticated, setUserRole }) {
           </div>
 
           <div className="form-group">
+            {passwordError && <div className="alert alert-danger">{passwordError}</div>}
             <label htmlFor="password">Password</label>
             <div className="password-input-wrapper">
               <input
