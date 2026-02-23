@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import './App.css';
 
 // Pages
@@ -25,6 +25,59 @@ import BookAppointment from './pages/BookAppointment';
 import Consultation from './pages/Consultation';
 import PaymentPage from './pages/PaymentPage';
 import Prescriptions from './pages/Prescriptions';
+
+const IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
+
+function IdleSessionHandler({ isAuthenticated, userRole }) {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated || !userRole) {
+      return undefined;
+    }
+
+    let timeoutId;
+
+    const logoutForInactivity = () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      window.dispatchEvent(new Event('storage'));
+      navigate('/', { replace: true });
+    };
+
+    const resetInactivityTimer = () => {
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(logoutForInactivity, IDLE_TIMEOUT_MS);
+    };
+
+    const activityEvents = [
+      'mousemove',
+      'mousedown',
+      'keydown',
+      'scroll',
+      'touchstart',
+      'click'
+    ];
+
+    activityEvents.forEach((eventName) => {
+      window.addEventListener(eventName, resetInactivityTimer, { passive: true });
+    });
+
+    resetInactivityTimer();
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      activityEvents.forEach((eventName) => {
+        window.removeEventListener(eventName, resetInactivityTimer);
+      });
+    };
+  }, [isAuthenticated, userRole, navigate]);
+
+  return null;
+}
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -63,6 +116,7 @@ function App() {
 
   return (
     <Router>
+      <IdleSessionHandler isAuthenticated={isAuthenticated} userRole={userRole} />
       <Routes>
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
