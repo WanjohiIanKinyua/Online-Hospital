@@ -26,7 +26,7 @@ export function DashboardLayout({ children, role = 'patient' }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [unreadFromAdmin, setUnreadFromAdmin] = useState(0);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
   const token = localStorage.getItem('token');
   const rawUserName = localStorage.getItem('userName');
@@ -42,35 +42,42 @@ export function DashboardLayout({ children, role = 'patient' }) {
     {
       to: '/chat',
       icon: FiMessageSquare,
-      label: unreadFromAdmin > 0 ? `Chat Room (${unreadFromAdmin} unread from admin)` : 'Chat Room'
+      label: unreadChatCount > 0 ? `Chat Room (${unreadChatCount} unread messages)` : 'Chat Room'
     },
     { to: '/prescriptions', icon: FiFileText, label: 'Prescriptions' },
     { to: '/profile', icon: FiSettings, label: 'My Profile' }
-  ]), [unreadFromAdmin]);
+  ]), [unreadChatCount]);
 
-  const adminLinks = [
+  const adminLinks = useMemo(() => ([
     { to: '/admin', icon: FiBarChart2, label: 'Overview' },
     { to: '/admin/schedule', icon: FiClock, label: 'Schedule' },
     { to: '/admin/approvals', icon: FiCheckSquare, label: 'Approvals' },
     { to: '/admin/book-for-patient', icon: FiUserPlus, label: 'Book Patient' },
     { to: '/admin/doctors', icon: FiUser, label: 'Doctors' },
     { to: '/admin/doctor-notes', icon: FiEdit3, label: 'Doctor Notes' },
-    { to: '/admin/chat', icon: FiMessageSquare, label: 'Chat Room' },
+    {
+      to: '/admin/chat',
+      icon: FiMessageSquare,
+      label: unreadChatCount > 0 ? `Chat Room (${unreadChatCount} unread messages)` : 'Chat Room'
+    },
     { to: '/admin/appointments', icon: FiCalendar, label: 'Appointments' },
     { to: '/admin/patients', icon: FiUsers, label: 'Patients' }
-  ];
+  ]), [unreadChatCount]);
 
   const links = role === 'admin' ? adminLinks : patientLinks;
 
   useEffect(() => {
-    if (role !== 'patient' || !token) return undefined;
+    if (!token || !['patient', 'admin'].includes(role)) return undefined;
 
     const loadUnreadSummary = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/chat/unread-summary`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setUnreadFromAdmin(Number(response.data?.unreadFromAdmin || 0));
+        const count = role === 'admin'
+          ? Number(response.data?.unreadFromPatients || response.data?.unreadTotal || 0)
+          : Number(response.data?.unreadFromAdmin || response.data?.unreadTotal || 0);
+        setUnreadChatCount(count);
       } catch (error) {
         // no-op
       }
