@@ -29,6 +29,11 @@ function PatientChat() {
     () => appointments.find((a) => a.id === selectedAppointmentId && selectedAppointmentId !== GENERAL_THREAD_ID),
     [appointments, selectedAppointmentId]
   );
+  const sharedBackupLink = useMemo(() => {
+    if (selectedAppointment?.meetingLink) return selectedAppointment.meetingLink;
+    const withLink = appointments.find((apt) => apt.meetingLink);
+    return withLink?.meetingLink || '';
+  }, [appointments, selectedAppointment]);
   const totalUnread = useMemo(
     () =>
       appointments.reduce((sum, apt) => sum + Number(apt.unreadCount || 0), 0) +
@@ -256,18 +261,18 @@ function PatientChat() {
                 Start New Enquiry
               </button>
             )}
+            {sharedBackupLink && (
+              <button
+                type="button"
+                className="backup-link-btn"
+                onClick={(e) => openBackupLinkModal(e, sharedBackupLink)}
+              >
+                Open Shared Link
+              </button>
+            )}
             {selectedAppointment && (
               <div className="chat-main-meta">
                 <span>Approval: {selectedAppointment.approvalStatus || 'pending'}</span>
-                {selectedAppointment.meetingLink && (
-                  <button
-                    type="button"
-                    className="backup-link-btn"
-                    onClick={(e) => openBackupLinkModal(e, selectedAppointment.meetingLink)}
-                  >
-                    Open Backup Meet Link
-                  </button>
-                )}
               </div>
             )}
           </div>
