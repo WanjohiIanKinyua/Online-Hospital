@@ -22,6 +22,7 @@ function Consultation() {
   const [cameraEnabled, setCameraEnabled] = useState(true);
   const [meetingEnded, setMeetingEnded] = useState(false);
   const [mutedByAdmin, setMutedByAdmin] = useState(false);
+  const [cameraControlledByAdmin, setCameraControlledByAdmin] = useState(false);
 
   const socketRef = useRef(null);
   const peerConnectionsRef = useRef({});
@@ -77,7 +78,7 @@ function Consultation() {
         audio: true
       });
       stream.getVideoTracks().forEach((track) => {
-        track.enabled = true;
+        track.enabled = false;
       });
       stream.getAudioTracks().forEach((track) => {
         track.enabled = true;
@@ -85,7 +86,7 @@ function Consultation() {
 
       localStreamRef.current = stream;
       await attachLocalStream(stream);
-      setCameraEnabled(stream.getVideoTracks().some((track) => track.enabled));
+      setCameraEnabled(false);
       setMicEnabled(stream.getAudioTracks().some((track) => track.enabled));
 
       const socket = io(`${API_BASE_URL}`, {
@@ -97,6 +98,10 @@ function Consultation() {
         socket.emit('join-room', {
           roomId,
           userName
+        });
+        socket.emit('participant-state', {
+          micEnabled: true,
+          cameraEnabled: false
         });
       });
 
@@ -164,6 +169,11 @@ function Consultation() {
       socket.on('force-muted-by-admin', () => {
         setMutedByAdmin(true);
         toggleMic(false, true);
+      });
+
+      socket.on('force-camera-by-admin', ({ enabled }) => {
+        setCameraControlledByAdmin(true);
+        toggleCamera(Boolean(enabled), true);
       });
 
       socket.on('meeting-ended', ({ endedBy }) => {
@@ -329,8 +339,8 @@ function Consultation() {
     emitParticipantState(nextState, cameraEnabled);
   };
 
-  const toggleCamera = async () => {
-    const nextState = !cameraEnabled;
+  const toggleCamera = async (forcedState = null, forcedByAdmin = false) => {
+    const nextState = typeof forcedState === 'boolean' ? forcedState : !cameraEnabled;
 
     if (!localStreamRef.current) {
       localStreamRef.current = new MediaStream();
@@ -367,6 +377,9 @@ function Consultation() {
     }
 
     setCameraEnabled(nextState);
+    if (!forcedByAdmin) {
+      setCameraControlledByAdmin(false);
+    }
     await attachLocalStream(localStreamRef.current);
     emitParticipantState(micEnabled, nextState);
   };
@@ -383,6 +396,17 @@ function Consultation() {
 
     socketRef.current.emit('admin-mute-patient', {
       targetSocketId: patient.socketId
+    });
+  };
+
+  const togglePatientCamera = () => {
+    if (!isAdmin || !socketRef.current) return;
+    const patient = participants.find((p) => p.role === 'patient');
+    if (!patient) return;
+
+    socketRef.current.emit('admin-camera-patient', {
+      targetSocketId: patient.socketId,
+      enabled: !Boolean(patient.cameraEnabled)
     });
   };
 
@@ -415,6 +439,9 @@ function Consultation() {
       )}
       {mutedByAdmin && (
         <div className="room-alert">You were muted by admin.</div>
+      )}
+      {cameraControlledByAdmin && (
+        <div className="room-alert">Your camera was changed by admin.</div>
       )}
       {error && appointment && !meetingEnded && (
         <div className="room-alert room-alert-danger">{error}</div>
@@ -469,6 +496,13 @@ function Consultation() {
         {isAdmin && (
           <button type="button" className="control-btn warn" onClick={mutePatient}>
             <FiVolumeX /> Mute Patient
+          </button>
+        )}
+
+        {isAdmin && (
+          <button type="button" className="control-btn warn" onClick={togglePatientCamera}>
+            {remoteParticipant?.cameraEnabled === false ? <FiVideo /> : <FiVideoOff />}
+            {remoteParticipant?.cameraEnabled === false ? ' Camera On Patient' : ' Camera Off Patient'}
           </button>
         )}
 

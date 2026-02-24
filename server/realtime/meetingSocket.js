@@ -47,7 +47,7 @@ function createMeetingSocket(io) {
         userName: userName || socket.user.email || 'User',
         role: socket.user.role,
         micEnabled: true,
-        cameraEnabled: true,
+        cameraEnabled: false,
         mutedByAdmin: false
       };
 
@@ -122,6 +122,25 @@ function createMeetingSocket(io) {
       room.set(targetSocketId, target);
 
       io.to(targetSocketId).emit('force-muted-by-admin');
+      io.to(roomId).emit('participant-updated', serializeParticipant(targetSocketId, target));
+    });
+
+    socket.on('admin-camera-patient', ({ targetSocketId, enabled }) => {
+      const roomId = socket.data.roomId;
+      if (!roomId || !targetSocketId || typeof enabled !== 'boolean') return;
+
+      const room = rooms.get(roomId);
+      if (!room || !room.has(socket.id) || !room.has(targetSocketId)) return;
+
+      const admin = room.get(socket.id);
+      const target = room.get(targetSocketId);
+
+      if (admin.role !== 'admin' || target.role !== 'patient') return;
+
+      target.cameraEnabled = enabled;
+      room.set(targetSocketId, target);
+
+      io.to(targetSocketId).emit('force-camera-by-admin', { enabled });
       io.to(roomId).emit('participant-updated', serializeParticipant(targetSocketId, target));
     });
 
