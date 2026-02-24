@@ -19,7 +19,7 @@ function Consultation() {
   const [error, setError] = useState('');
   const [participants, setParticipants] = useState([]);
   const [micEnabled, setMicEnabled] = useState(true);
-  const [cameraEnabled, setCameraEnabled] = useState(true);
+  const [cameraEnabled, setCameraEnabled] = useState(false);
   const [meetingEnded, setMeetingEnded] = useState(false);
   const [mutedByAdmin, setMutedByAdmin] = useState(false);
   const [cameraControlledByAdmin, setCameraControlledByAdmin] = useState(false);
