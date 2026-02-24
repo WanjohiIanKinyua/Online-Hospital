@@ -24,6 +24,8 @@ function AdminDashboard() {
 
   const token = localStorage.getItem('token');
   const getDisplayName = (record) => record.fullName || record.fullname || record.name || '-';
+  const buildAdminNotification = (unreadMessages, newBookedAppointments) =>
+    `You have ${unreadMessages} unread message${unreadMessages === 1 ? '' : 's'} and ${newBookedAppointments} booked appointment${newBookedAppointments === 1 ? '' : 's'}.`;
   const formatDate = (value) => {
     if (!value) return '-';
     const parsed = new Date(value);
@@ -63,8 +65,7 @@ function AdminDashboard() {
           (apt) => apt.approvalStatus === 'pending' || apt.status === 'pending'
         ).length;
 
-        const popupMessage = `You have ${unreadMessages} unread message${unreadMessages === 1 ? '' : 's'} and ${newBookedAppointments} booked appointment${newBookedAppointments === 1 ? '' : 's'}.`;
-        setLoginNotification(popupMessage);
+        setLoginNotification(buildAdminNotification(unreadMessages, newBookedAppointments));
       }
     } catch (error) {
       console.error('Failed to load admin overview:', error);
@@ -89,6 +90,41 @@ function AdminDashboard() {
     const timer = setTimeout(() => setLoginNotification(''), 60000);
     return () => clearTimeout(timer);
   }, [loginNotification]);
+
+  useEffect(() => {
+    if (!loginNotification) return undefined;
+
+    let stopped = false;
+
+    const refreshNotification = async () => {
+      try {
+        const [unreadRes, appointmentsRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/chat/unread-summary`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API_BASE_URL}/api/admin/appointments`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+
+        if (stopped) return;
+
+        const unreadMessages = Number(unreadRes.data?.unreadFromPatients || unreadRes.data?.unreadTotal || 0);
+        const newBookedAppointments = (appointmentsRes.data || []).filter(
+          (apt) => apt.approvalStatus === 'pending' || apt.status === 'pending'
+        ).length;
+        setLoginNotification(buildAdminNotification(unreadMessages, newBookedAppointments));
+      } catch (error) {
+        // Keep current notification if refresh fails.
+      }
+    };
+
+    const intervalId = setInterval(refreshNotification, 8000);
+    return () => {
+      stopped = true;
+      clearInterval(intervalId);
+    };
+  }, [loginNotification, token]);
 
   const downloadIncomeReport = async () => {
     if (downloadingIncome) return;
