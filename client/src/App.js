@@ -34,6 +34,7 @@ const IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
 const ACTIVITY_POLL_MS = 5000;
 
 const toNumber = (value) => Number(value || 0);
+const authHeaders = (token) => ({ Authorization: `Bearer ${token}` });
 
 const getLatestAppointment = (appointments = []) => {
   if (!Array.isArray(appointments) || appointments.length === 0) return null;
@@ -127,22 +128,36 @@ function GlobalActivityNotifier({ isAuthenticated, userRole }) {
 
     let stopped = false;
 
+    const fetchUnreadCount = async (token, role) => {
+      try {
+        const unreadRes = await axios.get(`${API_BASE_URL}/api/chat/unread-summary`, {
+          headers: authHeaders(token)
+        });
+        return role === 'admin'
+          ? toNumber(unreadRes.data?.unreadFromPatients || unreadRes.data?.unreadTotal)
+          : toNumber(unreadRes.data?.unreadFromAdmin || unreadRes.data?.unreadTotal);
+      } catch (primaryError) {
+        try {
+          const fallbackRes = await axios.get(`${API_BASE_URL}/api/chat/appointments`, {
+            headers: authHeaders(token)
+          });
+          return (fallbackRes.data || []).reduce((sum, item) => sum + toNumber(item.unreadCount), 0);
+        } catch (fallbackError) {
+          return snapshotRef.current.unread;
+        }
+      }
+    };
+
     const pollActivity = async () => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
       try {
-        const unreadRes = await axios.get(`${API_BASE_URL}/api/chat/unread-summary`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        const unreadCount = userRole === 'admin'
-          ? toNumber(unreadRes.data?.unreadFromPatients || unreadRes.data?.unreadTotal)
-          : toNumber(unreadRes.data?.unreadFromAdmin || unreadRes.data?.unreadTotal);
+        const unreadCount = await fetchUnreadCount(token, userRole);
 
         if (userRole === 'admin') {
           const appointmentsRes = await axios.get(`${API_BASE_URL}/api/admin/appointments`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: authHeaders(token)
           });
           const pendingBooked = (appointmentsRes.data || []).filter(
             (apt) => apt.approvalStatus === 'pending' || apt.status === 'pending'
@@ -170,7 +185,7 @@ function GlobalActivityNotifier({ isAuthenticated, userRole }) {
           }
         } else {
           const appointmentsRes = await axios.get(`${API_BASE_URL}/api/appointments`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: authHeaders(token)
           });
           const latest = getLatestAppointment(appointmentsRes.data || []);
           const latestStatus = latest?.approvalStatus || '';
