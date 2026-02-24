@@ -19,6 +19,7 @@ function AdminDashboard() {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
+  const [loginNotification, setLoginNotification] = useState('');
   const [downloadingIncome, setDownloadingIncome] = useState(false);
 
   const token = localStorage.getItem('token');
@@ -63,7 +64,7 @@ function AdminDashboard() {
         ).length;
 
         const popupMessage = `You have ${unreadMessages} unread message${unreadMessages === 1 ? '' : 's'} and ${newBookedAppointments} booked appointment${newBookedAppointments === 1 ? '' : 's'}.`;
-        window.alert(popupMessage);
+        setLoginNotification(popupMessage);
       }
     } catch (error) {
       console.error('Failed to load admin overview:', error);
@@ -82,6 +83,12 @@ function AdminDashboard() {
 
     loadOverview(isFreshLogin);
   }, [loadOverview]);
+
+  useEffect(() => {
+    if (!loginNotification) return undefined;
+    const timer = setTimeout(() => setLoginNotification(''), 7000);
+    return () => clearTimeout(timer);
+  }, [loginNotification]);
 
   const downloadIncomeReport = async () => {
     if (downloadingIncome) return;
@@ -170,6 +177,9 @@ function AdminDashboard() {
 
         {showLoginSuccess && (
           <div className="login-success-banner">You have successfully logged in.</div>
+        )}
+        {loginNotification && (
+          <div className="dashboard-login-popup">{loginNotification}</div>
         )}
 
         <div className="stats-grid">

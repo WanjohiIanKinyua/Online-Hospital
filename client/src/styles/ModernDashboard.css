@@ -21,6 +21,24 @@
   font-size: 0.92rem;
 }
 
+.dashboard-login-popup {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 1200;
+  max-width: 420px;
+  width: calc(100% - 2rem);
+  padding: 0.9rem 1rem;
+  border-radius: 0.65rem;
+  border: 1px solid #93c5fd;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-weight: 600;
+  font-size: 0.92rem;
+  box-shadow: var(--shadow-lg);
+  animation: fadeIn 0.25s ease-in-out;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -673,6 +691,15 @@ form {
 }
 
 @media (max-width: 480px) {
+  .dashboard-login-popup {
+    top: 0.75rem;
+    right: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+    max-width: none;
+    font-size: 0.85rem;
+  }
+
   .dashboard-title {
     font-size: 1.25rem;
   }

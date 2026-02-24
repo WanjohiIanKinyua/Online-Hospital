@@ -18,6 +18,7 @@ function PatientDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
+  const [loginNotification, setLoginNotification] = useState('');
 
   useEffect(() => {
     const isFreshLogin = localStorage.getItem('loginSuccess') === '1';
@@ -78,7 +79,7 @@ function PatientDashboard() {
           ).length;
 
           const popupMessage = `You have received ${unreadFromAdmin} new message${unreadFromAdmin === 1 ? '' : 's'} from admin and ${approvedBookings} booking${approvedBookings === 1 ? '' : 's'} approved.`;
-          window.alert(popupMessage);
+          setLoginNotification(popupMessage);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -89,6 +90,12 @@ function PatientDashboard() {
 
     fetchData();
   }, [navigate]);
+
+  useEffect(() => {
+    if (!loginNotification) return undefined;
+    const timer = setTimeout(() => setLoginNotification(''), 7000);
+    return () => clearTimeout(timer);
+  }, [loginNotification]);
 
   const upcomingAppointments = appointments
     .filter(a => a.status === 'confirmed' && new Date(a.appointmentDate) >= new Date())
@@ -159,6 +166,9 @@ function PatientDashboard() {
 
         {showLoginSuccess && (
           <div className="login-success-banner">You have successfully logged in.</div>
+        )}
+        {loginNotification && (
+          <div className="dashboard-login-popup">{loginNotification}</div>
         )}
 
         {loading ? (
