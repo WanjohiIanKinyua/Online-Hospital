@@ -18,35 +18,7 @@ function PatientDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
-  const [loginNotification, setLoginNotification] = useState('');
   const token = localStorage.getItem('token');
-
-  const getLatestBookingStatus = (appointmentsList = []) => {
-    const sorted = [...appointmentsList].sort((a, b) => {
-      const aDate = new Date(a.createdAt || a.createdat || a.appointmentDate || 0).getTime();
-      const bDate = new Date(b.createdAt || b.createdat || b.appointmentDate || 0).getTime();
-      return bDate - aDate;
-    });
-
-    const latest = sorted[0];
-    if (!latest) return null;
-    if (latest.approvalStatus === 'approved') return 'approved';
-    if (latest.approvalStatus === 'rejected') return 'rejected';
-    return null;
-  };
-
-  const buildPatientNotification = (unreadFromAdmin, latestBookingStatus) => {
-    const parts = [];
-    if (unreadFromAdmin > 0) {
-      parts.push(`You have received ${unreadFromAdmin} new message${unreadFromAdmin === 1 ? '' : 's'} from admin.`);
-    }
-    if (latestBookingStatus === 'approved') {
-      parts.push('Your latest booking has been approved.');
-    } else if (latestBookingStatus === 'rejected') {
-      parts.push('Your latest booking has been rejected.');
-    }
-    return parts.join(' ');
-  };
 
   useEffect(() => {
     const isFreshLogin = localStorage.getItem('loginSuccess') === '1';
@@ -90,23 +62,6 @@ function PatientDashboard() {
           pendingPrescriptions: pending
         });
 
-        if (isFreshLogin) {
-          let unreadFromAdmin = 0;
-          try {
-            const unreadRes = await axios.get(`${API_BASE_URL}/api/chat/unread-summary`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            unreadFromAdmin = Number(unreadRes.data?.unreadFromAdmin || unreadRes.data?.unreadTotal || 0);
-          } catch (error) {
-            unreadFromAdmin = 0;
-          }
-
-          const latestBookingStatus = getLatestBookingStatus(appts);
-          const popupMessage = buildPatientNotification(unreadFromAdmin, latestBookingStatus);
-          if (popupMessage) {
-            setLoginNotification(popupMessage);
-          }
-        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -116,50 +71,6 @@ function PatientDashboard() {
 
     fetchData();
   }, [navigate, token]);
-
-  useEffect(() => {
-    if (!loginNotification) return undefined;
-    const timer = setTimeout(() => setLoginNotification(''), 60000);
-    return () => clearTimeout(timer);
-  }, [loginNotification]);
-
-  useEffect(() => {
-    if (!loginNotification || !token) return undefined;
-
-    let stopped = false;
-
-    const refreshNotification = async () => {
-      try {
-        const [unreadRes, appointmentsRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/chat/unread-summary`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`${API_BASE_URL}/api/appointments`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ]);
-
-        if (stopped) return;
-
-        const unreadFromAdmin = Number(unreadRes.data?.unreadFromAdmin || unreadRes.data?.unreadTotal || 0);
-        const latestBookingStatus = getLatestBookingStatus(appointmentsRes.data || []);
-        const popupMessage = buildPatientNotification(unreadFromAdmin, latestBookingStatus);
-        if (popupMessage) {
-          setLoginNotification(popupMessage);
-        } else {
-          setLoginNotification('');
-        }
-      } catch (error) {
-        // Keep current notification if refresh fails.
-      }
-    };
-
-    const intervalId = setInterval(refreshNotification, 8000);
-    return () => {
-      stopped = true;
-      clearInterval(intervalId);
-    };
-  }, [loginNotification, token]);
 
   const upcomingAppointments = appointments
     .filter(a => a.status === 'confirmed' && new Date(a.appointmentDate) >= new Date())
@@ -230,19 +141,6 @@ function PatientDashboard() {
 
         {showLoginSuccess && (
           <div className="login-success-banner">You have successfully logged in.</div>
-        )}
-        {loginNotification && (
-          <div className="dashboard-login-popup" role="status" aria-live="polite">
-            <div className="dashboard-login-popup-text">{loginNotification}</div>
-            <button
-              type="button"
-              className="dashboard-login-popup-close"
-              onClick={() => setLoginNotification('')}
-              aria-label="Close notification"
-            >
-              x
-            </button>
-          </div>
         )}
 
         {loading ? (

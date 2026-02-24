@@ -19,20 +19,17 @@ function AdminDashboard() {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
-  const [loginNotification, setLoginNotification] = useState('');
   const [downloadingIncome, setDownloadingIncome] = useState(false);
 
   const token = localStorage.getItem('token');
   const getDisplayName = (record) => record.fullName || record.fullname || record.name || '-';
-  const buildAdminNotification = (unreadMessages, newBookedAppointments) =>
-    `You have ${unreadMessages} unread message${unreadMessages === 1 ? '' : 's'} and ${newBookedAppointments} booked appointment${newBookedAppointments === 1 ? '' : 's'}.`;
   const formatDate = (value) => {
     if (!value) return '-';
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleDateString();
   };
 
-  const loadOverview = useCallback(async (isFreshLogin = false) => {
+  const loadOverview = useCallback(async () => {
     try {
       const [statsRes, appointmentsRes, patientsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/admin/dashboard`, {
@@ -49,24 +46,6 @@ function AdminDashboard() {
       setStats(statsRes.data);
       setAppointments(appointmentsRes.data);
       setPatients(patientsRes.data);
-
-      if (isFreshLogin) {
-        let unreadMessages = 0;
-        try {
-          const unreadRes = await axios.get(`${API_BASE_URL}/api/chat/unread-summary`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          unreadMessages = Number(unreadRes.data?.unreadFromPatients || unreadRes.data?.unreadTotal || 0);
-        } catch (error) {
-          unreadMessages = 0;
-        }
-
-        const newBookedAppointments = (appointmentsRes.data || []).filter(
-          (apt) => apt.approvalStatus === 'pending' || apt.status === 'pending'
-        ).length;
-
-        setLoginNotification(buildAdminNotification(unreadMessages, newBookedAppointments));
-      }
     } catch (error) {
       console.error('Failed to load admin overview:', error);
     } finally {
@@ -82,49 +61,8 @@ function AdminDashboard() {
       setTimeout(() => setShowLoginSuccess(false), 3000);
     }
 
-    loadOverview(isFreshLogin);
+    loadOverview();
   }, [loadOverview]);
-
-  useEffect(() => {
-    if (!loginNotification) return undefined;
-    const timer = setTimeout(() => setLoginNotification(''), 60000);
-    return () => clearTimeout(timer);
-  }, [loginNotification]);
-
-  useEffect(() => {
-    if (!loginNotification) return undefined;
-
-    let stopped = false;
-
-    const refreshNotification = async () => {
-      try {
-        const [unreadRes, appointmentsRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/chat/unread-summary`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`${API_BASE_URL}/api/admin/appointments`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ]);
-
-        if (stopped) return;
-
-        const unreadMessages = Number(unreadRes.data?.unreadFromPatients || unreadRes.data?.unreadTotal || 0);
-        const newBookedAppointments = (appointmentsRes.data || []).filter(
-          (apt) => apt.approvalStatus === 'pending' || apt.status === 'pending'
-        ).length;
-        setLoginNotification(buildAdminNotification(unreadMessages, newBookedAppointments));
-      } catch (error) {
-        // Keep current notification if refresh fails.
-      }
-    };
-
-    const intervalId = setInterval(refreshNotification, 8000);
-    return () => {
-      stopped = true;
-      clearInterval(intervalId);
-    };
-  }, [loginNotification, token]);
 
   const downloadIncomeReport = async () => {
     if (downloadingIncome) return;
@@ -213,19 +151,6 @@ function AdminDashboard() {
 
         {showLoginSuccess && (
           <div className="login-success-banner">You have successfully logged in.</div>
-        )}
-        {loginNotification && (
-          <div className="dashboard-login-popup" role="status" aria-live="polite">
-            <div className="dashboard-login-popup-text">{loginNotification}</div>
-            <button
-              type="button"
-              className="dashboard-login-popup-close"
-              onClick={() => setLoginNotification('')}
-              aria-label="Close notification"
-            >
-              x
-            </button>
-          </div>
         )}
 
         <div className="stats-grid">

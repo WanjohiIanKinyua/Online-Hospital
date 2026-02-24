@@ -151,7 +151,7 @@ function GlobalActivityNotifier({ isAuthenticated, userRole }) {
           if (!stopped && isPrimedRef.current) {
             const messages = [];
             if (unreadCount > snapshotRef.current.unread) {
-              messages.push(`You have ${unreadCount} new message${unreadCount === 1 ? '' : 's'} from patients.`);
+              messages.push(`You have ${unreadCount} unread message${unreadCount === 1 ? '' : 's'} from patients.`);
             }
             if (pendingBooked > snapshotRef.current.pendingBooked) {
               messages.push(`You have ${pendingBooked} booked appointment${pendingBooked === 1 ? '' : 's'} awaiting action.`);
@@ -185,11 +185,11 @@ function GlobalActivityNotifier({ isAuthenticated, userRole }) {
               (latestStatus === 'approved' || latestStatus === 'rejected')
             ) {
               if (unreadCount > 0) {
-                messages.push(`You have ${unreadCount} new message${unreadCount === 1 ? '' : 's'} from admin.`);
+                messages.push(`You have ${unreadCount} unread message${unreadCount === 1 ? '' : 's'} from admin.`);
               }
-              messages.push(`Your latest booking has been ${latestStatus}.`);
+              messages.push(`Your latest booking is ${latestStatus}.`);
             } else if (hasNewAdminText) {
-              messages.push(`You have ${unreadCount} new message${unreadCount === 1 ? '' : 's'} from admin.`);
+              messages.push(`You have ${unreadCount} unread message${unreadCount === 1 ? '' : 's'} from admin.`);
             }
             if (messages.length) {
               setNotice(messages.join(' '));
