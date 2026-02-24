@@ -48,6 +48,28 @@ const getLatestAppointment = (appointments = []) => {
   return sorted[0];
 };
 
+const buildAdminNotice = (unreadCount, pendingBooked) => {
+  const parts = [];
+  if (unreadCount > 0) {
+    parts.push(`You have ${unreadCount} unread message${unreadCount === 1 ? '' : 's'} from patients.`);
+  }
+  if (pendingBooked > 0) {
+    parts.push(`You have ${pendingBooked} booked appointment${pendingBooked === 1 ? '' : 's'} awaiting action.`);
+  }
+  return parts.join(' ');
+};
+
+const buildPatientNotice = (unreadCount, latestStatus) => {
+  const parts = [];
+  if (unreadCount > 0) {
+    parts.push(`You have ${unreadCount} unread message${unreadCount === 1 ? '' : 's'} from admin.`);
+  }
+  if (latestStatus === 'approved' || latestStatus === 'rejected') {
+    parts.push(`Your latest booking is ${latestStatus}.`);
+  }
+  return parts.join(' ');
+};
+
 function IdleSessionHandler({ isAuthenticated, userRole }) {
   const navigate = useNavigate();
 
@@ -138,10 +160,24 @@ function GlobalActivityNotifier({ isAuthenticated, userRole }) {
           : toNumber(unreadRes.data?.unreadFromAdmin || unreadRes.data?.unreadTotal);
       } catch (primaryError) {
         try {
-          const fallbackRes = await axios.get(`${API_BASE_URL}/api/chat/appointments`, {
-            headers: authHeaders(token)
-          });
-          return (fallbackRes.data || []).reduce((sum, item) => sum + toNumber(item.unreadCount), 0);
+          const [appointmentThreadsRes, generalThreadsRes] = await Promise.all([
+            axios.get(`${API_BASE_URL}/api/chat/appointments`, {
+              headers: authHeaders(token)
+            }),
+            axios.get(`${API_BASE_URL}/api/chat/general/threads`, {
+              headers: authHeaders(token)
+            })
+          ]);
+
+          const appointmentUnread = (appointmentThreadsRes.data || []).reduce(
+            (sum, item) => sum + toNumber(item.unreadCount),
+            0
+          );
+          const generalUnread = (generalThreadsRes.data || []).reduce(
+            (sum, item) => sum + toNumber(item.unreadCount),
+            0
+          );
+          return appointmentUnread + generalUnread;
         } catch (fallbackError) {
           return snapshotRef.current.unread;
         }
@@ -163,16 +199,19 @@ function GlobalActivityNotifier({ isAuthenticated, userRole }) {
             (apt) => apt.approvalStatus === 'pending' || apt.status === 'pending'
           ).length;
 
-          if (!stopped && isPrimedRef.current) {
-            const messages = [];
-            if (unreadCount > snapshotRef.current.unread) {
-              messages.push(`You have ${unreadCount} unread message${unreadCount === 1 ? '' : 's'} from patients.`);
+          if (!stopped && !isPrimedRef.current) {
+            const initialNotice = buildAdminNotice(unreadCount, pendingBooked);
+            if (initialNotice) {
+              setNotice(initialNotice);
             }
-            if (pendingBooked > snapshotRef.current.pendingBooked) {
-              messages.push(`You have ${pendingBooked} booked appointment${pendingBooked === 1 ? '' : 's'} awaiting action.`);
-            }
-            if (messages.length) {
-              setNotice(messages.join(' '));
+          } else if (!stopped && isPrimedRef.current) {
+            const hasNewMessages = unreadCount > snapshotRef.current.unread;
+            const hasNewBookings = pendingBooked > snapshotRef.current.pendingBooked;
+            if (hasNewMessages || hasNewBookings) {
+              const liveNotice = buildAdminNotice(unreadCount, pendingBooked);
+              if (liveNotice) {
+                setNotice(liveNotice);
+              }
             }
           }
 
@@ -191,23 +230,28 @@ function GlobalActivityNotifier({ isAuthenticated, userRole }) {
           const latestStatus = latest?.approvalStatus || '';
           const latestBookingKey = latest ? `${latest.id}:${latestStatus}` : '';
 
-          if (!stopped && isPrimedRef.current) {
-            const messages = [];
+          if (!stopped && !isPrimedRef.current) {
+            const initialNotice = buildPatientNotice(unreadCount, latestStatus);
+            if (initialNotice) {
+              setNotice(initialNotice);
+            }
+          } else if (!stopped && isPrimedRef.current) {
             const hasNewAdminText = unreadCount > snapshotRef.current.unread;
+            let shouldNotify = false;
             if (
               latestBookingKey &&
               latestBookingKey !== snapshotRef.current.latestBookingKey &&
               (latestStatus === 'approved' || latestStatus === 'rejected')
             ) {
-              if (unreadCount > 0) {
-                messages.push(`You have ${unreadCount} unread message${unreadCount === 1 ? '' : 's'} from admin.`);
-              }
-              messages.push(`Your latest booking is ${latestStatus}.`);
+              shouldNotify = true;
             } else if (hasNewAdminText) {
-              messages.push(`You have ${unreadCount} unread message${unreadCount === 1 ? '' : 's'} from admin.`);
+              shouldNotify = true;
             }
-            if (messages.length) {
-              setNotice(messages.join(' '));
+            if (shouldNotify) {
+              const liveNotice = buildPatientNotice(unreadCount, latestStatus);
+              if (liveNotice) {
+                setNotice(liveNotice);
+              }
             }
           }
 

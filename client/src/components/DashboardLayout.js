@@ -82,14 +82,24 @@ export function DashboardLayout({ children, role = 'patient' }) {
         setUnreadChatCount(count);
       } catch (error) {
         try {
-          const fallbackResponse = await axios.get(`${API_BASE_URL}/api/chat/appointments`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const fallbackCount = (fallbackResponse.data || []).reduce(
+          const [appointmentThreadsRes, generalThreadsRes] = await Promise.all([
+            axios.get(`${API_BASE_URL}/api/chat/appointments`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }),
+            axios.get(`${API_BASE_URL}/api/chat/general/threads`, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          ]);
+
+          const appointmentUnread = (appointmentThreadsRes.data || []).reduce(
             (sum, apt) => sum + Number(apt.unreadCount || 0),
             0
           );
-          setUnreadChatCount(fallbackCount);
+          const generalUnread = (generalThreadsRes.data || []).reduce(
+            (sum, thread) => sum + Number(thread.unreadCount || 0),
+            0
+          );
+          setUnreadChatCount(appointmentUnread + generalUnread);
         } catch (fallbackError) {
           setUnreadChatCount(0);
         }

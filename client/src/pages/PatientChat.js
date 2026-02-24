@@ -216,10 +216,20 @@ function PatientChat() {
                 className={`chat-thread ${selectedAppointmentId === apt.id ? 'active' : ''}`}
                 onClick={() => setSelectedAppointmentId(apt.id)}
               >
-                <div className="chat-thread-title">
-                  {new Date(apt.appointmentDate).toLocaleDateString()} {apt.appointmentTime}
+                <div className="chat-thread-title-row">
+                  <span className="chat-thread-title">
+                    {new Date(apt.appointmentDate).toLocaleDateString()} {apt.appointmentTime}
+                  </span>
+                  {Number(apt.unreadCount || 0) > 0 && (
+                    <span className="chat-unread-badge">{Number(apt.unreadCount || 0)}</span>
+                  )}
                 </div>
                 <div className="chat-thread-sub">{apt.lastMessage || 'No messages yet'}</div>
+                {Number(apt.unreadCount || 0) > 0 && (
+                  <div className="chat-thread-unread-text">
+                    {Number(apt.unreadCount || 0)} unread message{Number(apt.unreadCount || 0) > 1 ? 's' : ''}
+                  </div>
+                )}
               </button>
             ))
           )}
