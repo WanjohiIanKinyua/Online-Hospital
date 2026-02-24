@@ -215,18 +215,9 @@ function PatientDashboard() {
                             {appointment.status}
                           </span>
                         </div>
-                        {appointment.meetingLink ? (
-                          <a
-                            href={appointment.meetingLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn-join-meeting"
-                          >
-                            <FiVideo /> Join Meeting
-                          </a>
-                        ) : (
-                          <span className="text-muted">Meeting link pending</span>
-                        )}
+                        <Link to={`/consultation/${appointment.id}`} className="btn-join-meeting">
+                          <FiVideo /> Enter Care Room
+                        </Link>
                       </div>
                     ))}
                   </div>
