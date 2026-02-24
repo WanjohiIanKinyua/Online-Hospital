@@ -137,7 +137,7 @@ function BookAppointment() {
         `${API_BASE_URL}/api/payments/create`,
         {
           appointmentId,
-          amount: 500,
+          amount: 1000,
           paymentMethod,
           phoneNumber: paymentDetails.mpesaPhone,
           cardNumber: paymentDetails.cardNumber
@@ -176,7 +176,7 @@ function BookAppointment() {
 
           <div className="booking-card">
             <h1>Book a Consultation</h1>
-            <p className="consultation-fee">Consultation Fee: <strong>KSH 500</strong></p>
+            <p className="consultation-fee">Consultation Fee: <strong>KSH 1000</strong></p>
 
             <form onSubmit={handleBookAppointment}>
               {error && <div className="alert alert-danger">{error}</div>}
@@ -345,7 +345,7 @@ function BookAppointment() {
                 <h3>Appointment Summary</h3>
                 <div className="summary-item">
                   <span>Consultation Fee:</span>
-                  <strong>KSH 500</strong>
+                  <strong>KSH 1000</strong>
                 </div>
                 {formData.appointmentDate && (
                   <div className="summary-item">

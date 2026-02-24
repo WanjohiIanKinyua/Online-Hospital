@@ -2,11 +2,12 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
 
 exports.createPayment = (req, res) => {
-  const { appointmentId, amount, paymentMethod = 'card', phoneNumber, cardNumber } = req.body;
+  const { appointmentId, paymentMethod = 'card', phoneNumber, cardNumber } = req.body;
   const patientId = req.user.id;
+  const consultationAmount = 1000;
 
-  if (!appointmentId || !amount) {
-    return res.status(400).json({ error: 'Appointment ID and amount are required' });
+  if (!appointmentId) {
+    return res.status(400).json({ error: 'Appointment ID is required' });
   }
 
   // Verify appointment belongs to patient
@@ -32,7 +33,7 @@ exports.createPayment = (req, res) => {
         paymentId,
         appointmentId,
         patientId,
-        amount,
+        consultationAmount,
         paymentMethod === 'mpesa' ? `mpesa:${phoneNumber || ''}` : `card:${(cardNumber || '').slice(-4)}`,
         transactionId,
         'completed'

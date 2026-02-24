@@ -191,7 +191,7 @@ function PatientChat() {
         <div className="chat-sidebar">
           <h3>Your Chats</h3>
           <p className="chat-unread-summary">
-            You have {totalUnread} unread message{totalUnread === 1 ? '' : 's'}
+            Unread messages: {totalUnread}
           </p>
           <div className="general-chat-highlight">
             <div className="general-chat-title">General Enquiries</div>

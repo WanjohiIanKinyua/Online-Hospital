@@ -78,7 +78,7 @@ function PaymentPage() {
         `${API_BASE_URL}/api/payments/create`,
         {
           appointmentId,
-          amount: 500,
+          amount: 1000,
           paymentMethod,
           phoneNumber: paymentDetails.mpesaPhone,
           cardNumber: paymentDetails.cardNumber
@@ -121,7 +121,7 @@ function PaymentPage() {
               Time: <strong>{appointment.appointmentTime}</strong>
             </p>
             <p>
-              Amount Paid: <strong>KSH 500</strong>
+              Amount Paid: <strong>KSH 1000</strong>
             </p>
           </div>
           <p style={{ marginTop: '20px', color: '#999' }}>Redirecting to dashboard in 3 seconds...</p>
@@ -266,7 +266,7 @@ function PaymentPage() {
             <div className="price-summary">
               <div className="summary-row">
                 <span>Consultation Fee:</span>
-                <strong>KSH 500</strong>
+                <strong>KSH 1000</strong>
               </div>
               <div className="summary-row">
                 <span>Processing Fee:</span>
@@ -274,7 +274,7 @@ function PaymentPage() {
               </div>
               <div className="summary-row total">
                 <span>Total Amount:</span>
-                <strong>KSH 500</strong>
+                <strong>KSH 1000</strong>
               </div>
             </div>
 

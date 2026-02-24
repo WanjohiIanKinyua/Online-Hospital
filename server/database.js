@@ -292,10 +292,14 @@ const initializeDatabase = async () => {
         approvalReason TEXT,
         meetingLink TEXT,
         paymentStatus TEXT DEFAULT 'pending',
-        consultationFee INTEGER DEFAULT 500,
+        consultationFee INTEGER DEFAULT 1000,
         createdAt TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+
+    // Keep consultation fee consistent for existing and future records.
+    await pool.query(`ALTER TABLE appointments ALTER COLUMN consultationFee SET DEFAULT 1000`);
+    await pool.query(`UPDATE appointments SET consultationFee = 1000 WHERE consultationFee IS NULL OR consultationFee = 500`);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS doctors (

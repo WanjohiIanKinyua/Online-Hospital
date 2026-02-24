@@ -129,7 +129,7 @@ function LandingPage() {
                 <FiCreditCard />
               </div>
               <h3>Secure Payments</h3>
-              <p>Simple and safe payment processing at just KSH 500 per consultation.</p>
+              <p>Simple and safe payment processing at just KSH 1000 per consultation.</p>
             </div>
 
             <div className="feature-card">
