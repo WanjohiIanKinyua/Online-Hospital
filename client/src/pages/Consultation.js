@@ -39,6 +39,7 @@ function Consultation() {
   const offerRetryTimersRef = useRef({});
   const endRedirectTimerRef = useRef(null);
   const remoteParticipant = participants[0] || null;
+  const patientParticipant = participants.find((p) => p.role === 'patient') || null;
 
   useEffect(() => {
     let mounted = true;
@@ -401,7 +402,7 @@ function Consultation() {
 
   const togglePatientCamera = () => {
     if (!isAdmin || !socketRef.current) return;
-    const patient = participants.find((p) => p.role === 'patient');
+    const patient = patientParticipant;
     if (!patient) return;
 
     socketRef.current.emit('admin-camera-patient', {
@@ -500,9 +501,14 @@ function Consultation() {
         )}
 
         {isAdmin && (
-          <button type="button" className="control-btn warn" onClick={togglePatientCamera}>
-            {remoteParticipant?.cameraEnabled === false ? <FiVideo /> : <FiVideoOff />}
-            {remoteParticipant?.cameraEnabled === false ? ' Camera On Patient' : ' Camera Off Patient'}
+          <button
+            type="button"
+            className="control-btn warn"
+            onClick={togglePatientCamera}
+            disabled={!patientParticipant}
+          >
+            {patientParticipant?.cameraEnabled === false ? <FiVideo /> : <FiVideoOff />}
+            {patientParticipant?.cameraEnabled === false ? ' Camera On Patient' : ' Camera Off Patient'}
           </button>
         )}
 
