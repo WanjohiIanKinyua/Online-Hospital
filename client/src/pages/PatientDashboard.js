@@ -93,7 +93,7 @@ function PatientDashboard() {
 
   useEffect(() => {
     if (!loginNotification) return undefined;
-    const timer = setTimeout(() => setLoginNotification(''), 7000);
+    const timer = setTimeout(() => setLoginNotification(''), 60000);
     return () => clearTimeout(timer);
   }, [loginNotification]);
 
@@ -168,7 +168,17 @@ function PatientDashboard() {
           <div className="login-success-banner">You have successfully logged in.</div>
         )}
         {loginNotification && (
-          <div className="dashboard-login-popup">{loginNotification}</div>
+          <div className="dashboard-login-popup" role="status" aria-live="polite">
+            <div className="dashboard-login-popup-text">{loginNotification}</div>
+            <button
+              type="button"
+              className="dashboard-login-popup-close"
+              onClick={() => setLoginNotification('')}
+              aria-label="Close notification"
+            >
+              x
+            </button>
+          </div>
         )}
 
         {loading ? (
