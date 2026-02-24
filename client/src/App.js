@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import axios from 'axios';
 import './App.css';
+import { API_BASE_URL } from './config/api';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -29,6 +31,21 @@ import PaymentPage from './pages/PaymentPage';
 import Prescriptions from './pages/Prescriptions';
 
 const IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
+const ACTIVITY_POLL_MS = 5000;
+
+const toNumber = (value) => Number(value || 0);
+
+const getLatestAppointment = (appointments = []) => {
+  if (!Array.isArray(appointments) || appointments.length === 0) return null;
+
+  const sorted = [...appointments].sort((a, b) => {
+    const aTime = new Date(a.createdAt || a.createdat || a.appointmentDate || 0).getTime();
+    const bTime = new Date(b.createdAt || b.createdat || b.appointmentDate || 0).getTime();
+    return bTime - aTime;
+  });
+
+  return sorted[0];
+};
 
 function IdleSessionHandler({ isAuthenticated, userRole }) {
   const navigate = useNavigate();
@@ -81,6 +98,147 @@ function IdleSessionHandler({ isAuthenticated, userRole }) {
   return null;
 }
 
+function GlobalActivityNotifier({ isAuthenticated, userRole }) {
+  const [notice, setNotice] = useState('');
+  const isPrimedRef = useRef(false);
+  const snapshotRef = useRef({
+    unread: 0,
+    pendingBooked: 0,
+    latestBookingKey: ''
+  });
+
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = setTimeout(() => setNotice(''), 60000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !userRole) {
+      isPrimedRef.current = false;
+      snapshotRef.current = {
+        unread: 0,
+        pendingBooked: 0,
+        latestBookingKey: ''
+      };
+      setNotice('');
+      return undefined;
+    }
+
+    let stopped = false;
+
+    const pollActivity = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        const unreadRes = await axios.get(`${API_BASE_URL}/api/chat/unread-summary`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const unreadCount = userRole === 'admin'
+          ? toNumber(unreadRes.data?.unreadFromPatients || unreadRes.data?.unreadTotal)
+          : toNumber(unreadRes.data?.unreadFromAdmin || unreadRes.data?.unreadTotal);
+
+        if (userRole === 'admin') {
+          const appointmentsRes = await axios.get(`${API_BASE_URL}/api/admin/appointments`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const pendingBooked = (appointmentsRes.data || []).filter(
+            (apt) => apt.approvalStatus === 'pending' || apt.status === 'pending'
+          ).length;
+
+          if (!stopped && isPrimedRef.current) {
+            const messages = [];
+            if (unreadCount > snapshotRef.current.unread) {
+              messages.push(`You have ${unreadCount} new message${unreadCount === 1 ? '' : 's'} from patients.`);
+            }
+            if (pendingBooked > snapshotRef.current.pendingBooked) {
+              messages.push(`You have ${pendingBooked} booked appointment${pendingBooked === 1 ? '' : 's'} awaiting action.`);
+            }
+            if (messages.length) {
+              setNotice(messages.join(' '));
+            }
+          }
+
+          if (!stopped) {
+            snapshotRef.current = {
+              unread: unreadCount,
+              pendingBooked,
+              latestBookingKey: ''
+            };
+          }
+        } else {
+          const appointmentsRes = await axios.get(`${API_BASE_URL}/api/appointments`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const latest = getLatestAppointment(appointmentsRes.data || []);
+          const latestStatus = latest?.approvalStatus || '';
+          const latestBookingKey = latest ? `${latest.id}:${latestStatus}` : '';
+
+          if (!stopped && isPrimedRef.current) {
+            const messages = [];
+            const hasNewAdminText = unreadCount > snapshotRef.current.unread;
+            if (
+              latestBookingKey &&
+              latestBookingKey !== snapshotRef.current.latestBookingKey &&
+              (latestStatus === 'approved' || latestStatus === 'rejected')
+            ) {
+              if (unreadCount > 0) {
+                messages.push(`You have ${unreadCount} new message${unreadCount === 1 ? '' : 's'} from admin.`);
+              }
+              messages.push(`Your latest booking has been ${latestStatus}.`);
+            } else if (hasNewAdminText) {
+              messages.push(`You have ${unreadCount} new message${unreadCount === 1 ? '' : 's'} from admin.`);
+            }
+            if (messages.length) {
+              setNotice(messages.join(' '));
+            }
+          }
+
+          if (!stopped) {
+            snapshotRef.current = {
+              unread: unreadCount,
+              pendingBooked: 0,
+              latestBookingKey
+            };
+          }
+        }
+
+        if (!stopped && !isPrimedRef.current) {
+          isPrimedRef.current = true;
+        }
+      } catch (error) {
+        // Silent failure: keep polling for next successful cycle.
+      }
+    };
+
+    pollActivity();
+    const intervalId = setInterval(pollActivity, ACTIVITY_POLL_MS);
+
+    return () => {
+      stopped = true;
+      clearInterval(intervalId);
+    };
+  }, [isAuthenticated, userRole]);
+
+  if (!notice) return null;
+
+  return (
+    <div className="global-activity-notice" role="status" aria-live="polite">
+      <div className="global-activity-notice-text">{notice}</div>
+      <button
+        type="button"
+        className="global-activity-notice-close"
+        onClick={() => setNotice('')}
+        aria-label="Close activity notification"
+      >
+        x
+      </button>
+    </div>
+  );
+}
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
@@ -119,6 +277,7 @@ function App() {
   return (
     <Router>
       <IdleSessionHandler isAuthenticated={isAuthenticated} userRole={userRole} />
+      <GlobalActivityNotifier isAuthenticated={isAuthenticated} userRole={userRole} />
       <Routes>
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />

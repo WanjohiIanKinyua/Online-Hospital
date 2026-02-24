@@ -492,3 +492,58 @@ tr:hover {
   font-size: 18px;
   margin-bottom: 20px;
 }
+
+.global-activity-notice {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 2500;
+  width: min(360px, calc(100vw - 1.5rem));
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  color: #1e3a8a;
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+  padding: 0.75rem 0.8rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.global-activity-notice-text {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.global-activity-notice-close {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: none;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.global-activity-notice-close:hover {
+  background: #bfdbfe;
+}
+
+@media (max-width: 480px) {
+  .global-activity-notice {
+    left: 0.75rem;
+    right: 0.75rem;
+    width: auto;
+    bottom: 0.75rem;
+  }
+}
