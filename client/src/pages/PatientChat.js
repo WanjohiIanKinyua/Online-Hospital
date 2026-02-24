@@ -29,6 +29,12 @@ function PatientChat() {
     () => appointments.find((a) => a.id === selectedAppointmentId && selectedAppointmentId !== GENERAL_THREAD_ID),
     [appointments, selectedAppointmentId]
   );
+  const totalUnread = useMemo(
+    () =>
+      appointments.reduce((sum, apt) => sum + Number(apt.unreadCount || 0), 0) +
+      Number(generalThread?.unreadCount || 0),
+    [appointments, generalThread]
+  );
 
   useEffect(() => {
     loadAppointments();
@@ -179,6 +185,9 @@ function PatientChat() {
       <div className="chat-page">
         <div className="chat-sidebar">
           <h3>Your Chats</h3>
+          <p className="chat-unread-summary">
+            You have {totalUnread} unread message{totalUnread === 1 ? '' : 's'}
+          </p>
           <div className="general-chat-highlight">
             <div className="general-chat-title">General Enquiries</div>
             <div className="general-chat-subtitle">No appointment needed</div>
