@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -35,7 +35,7 @@ export function DashboardLayout({ children, role = 'patient' }) {
       ? rawUserName
       : (userEmail.split('@')[0] || 'User');
 
-  const patientLinks = useMemo(() => ([
+  const patientLinks = [
     { to: '/dashboard', icon: FiLayout, label: 'Overview' },
     { to: '/book-appointment', icon: FiPlusSquare, label: 'Book Appointment' },
     { to: '/appointments', icon: FiCalendar, label: 'Booked Appointments' },
@@ -47,9 +47,9 @@ export function DashboardLayout({ children, role = 'patient' }) {
     },
     { to: '/prescriptions', icon: FiFileText, label: 'Prescriptions' },
     { to: '/profile', icon: FiSettings, label: 'My Profile' }
-  ]), [unreadChatCount]);
+  ];
 
-  const adminLinks = useMemo(() => ([
+  const adminLinks = [
     { to: '/admin', icon: FiBarChart2, label: 'Overview' },
     { to: '/admin/schedule', icon: FiClock, label: 'Schedule' },
     { to: '/admin/approvals', icon: FiCheckSquare, label: 'Approvals' },
@@ -64,7 +64,7 @@ export function DashboardLayout({ children, role = 'patient' }) {
     },
     { to: '/admin/appointments', icon: FiCalendar, label: 'Appointments' },
     { to: '/admin/patients', icon: FiUsers, label: 'Patients' }
-  ]), [unreadChatCount]);
+  ];
 
   const links = role === 'admin' ? adminLinks : patientLinks;
 
