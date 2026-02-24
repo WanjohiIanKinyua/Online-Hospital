@@ -65,7 +65,7 @@ const buildPatientNotice = (unreadCount, latestStatus) => {
     parts.push(`You have ${unreadCount} unread message${unreadCount === 1 ? '' : 's'} from admin.`);
   }
   if (latestStatus === 'approved' || latestStatus === 'rejected') {
-    parts.push(`Your latest booking is ${latestStatus}.`);
+    parts.push(`Your last booking was ${latestStatus}.`);
   }
   return parts.join(' ');
 };
