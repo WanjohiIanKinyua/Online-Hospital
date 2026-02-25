@@ -148,9 +148,9 @@ function BookAppointment() {
       );
 
       setShowMpesaPopup(false);
-      setSuccess('Appointment request submitted and payment received. Waiting for admin approval. Redirecting to dashboard...');
+      setSuccess('You have successfully booked an appointment. Redirecting to booked appointments...');
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/appointments');
       }, 2000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to book appointment');
