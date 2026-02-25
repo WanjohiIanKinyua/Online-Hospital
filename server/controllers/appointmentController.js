@@ -120,12 +120,18 @@ exports.bookAppointment = (req, res) => {
 exports.getAppointments = (req, res) => {
   const patientId = req.user.id;
 
-  db.all('SELECT * FROM appointments WHERE patientId = ? ORDER BY appointmentDate DESC', [patientId], (err, appointments) => {
+  db.all(
+    `SELECT * FROM appointments
+     WHERE patientId = ?
+     ORDER BY createdAt DESC, appointmentDate DESC, appointmentTime DESC`,
+    [patientId],
+    (err, appointments) => {
     if (err) {
       return res.status(500).json({ error: 'Failed to fetch appointments' });
     }
     res.status(200).json(appointments);
-  });
+    }
+  );
 };
 
 exports.getAppointmentById = (req, res) => {

@@ -64,7 +64,7 @@ exports.getAllAppointments = (req, res) => {
   db.all(
     `SELECT a.*, u.fullName, u.email FROM appointments a 
      JOIN users u ON a.patientId = u.id 
-     ORDER BY a.appointmentDate DESC`,
+     ORDER BY a.createdAt DESC, a.appointmentDate DESC, a.appointmentTime DESC`,
     (err, appointments) => {
       if (err) {
         return res.status(500).json({ error: 'Failed to fetch appointments' });
