@@ -36,7 +36,6 @@ exports.getAvailableSlots = (req, res) => {
         FROM appointments a
         WHERE a.appointmentDate = s.slotDate
           AND a.appointmentTime = s.slotTime
-          AND a.approvalStatus = 'approved'
           AND a.status != 'cancelled'
       )
       ORDER BY s.slotTime ASC
@@ -83,7 +82,6 @@ exports.bookAppointment = (req, res) => {
           SELECT id FROM appointments
           WHERE appointmentDate = ?
           AND appointmentTime = ?
-          AND approvalStatus = 'approved'
           AND status != 'cancelled'
           LIMIT 1
         `,
@@ -94,7 +92,7 @@ exports.bookAppointment = (req, res) => {
           }
 
           if (conflict) {
-            return res.status(400).json({ error: 'This time slot has already been approved for another patient' });
+            return res.status(400).json({ error: 'This time slot has already been selected by another patient' });
           }
 
           db.run(
@@ -109,6 +107,91 @@ exports.bookAppointment = (req, res) => {
                 message: 'Appointment request submitted. Waiting for admin approval.',
                 appointmentId
               });
+            }
+          );
+        }
+      );
+    }
+  );
+};
+
+exports.rescheduleAppointment = (req, res) => {
+  const { id } = req.params;
+  const { appointmentDate, appointmentTime } = req.body;
+  const patientId = req.user.id;
+
+  if (!appointmentDate || !appointmentTime) {
+    return res.status(400).json({ error: 'Date and time are required' });
+  }
+
+  db.get(
+    `SELECT * FROM appointments WHERE id = ? AND patientId = ?`,
+    [id, patientId],
+    (findErr, appointment) => {
+      if (findErr) {
+        return res.status(500).json({ error: 'Failed to load appointment' });
+      }
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+      if (appointment.status === 'cancelled' || appointment.status === 'completed') {
+        return res.status(400).json({ error: 'This appointment cannot be rescheduled' });
+      }
+      if (appointment.approvalStatus !== 'pending') {
+        return res.status(400).json({ error: 'Only pending appointments can be rescheduled' });
+      }
+
+      db.get(
+        `
+          SELECT id FROM availability_slots
+          WHERE slotDate = ?
+          AND slotTime = ?
+          AND isActive = 1
+        `,
+        [appointmentDate, appointmentTime],
+        (slotErr, slot) => {
+          if (slotErr) {
+            return res.status(500).json({ error: 'Failed to validate slot availability' });
+          }
+          if (!slot) {
+            return res.status(400).json({ error: 'Selected slot is not available' });
+          }
+
+          db.get(
+            `
+              SELECT id FROM appointments
+              WHERE appointmentDate = ?
+              AND appointmentTime = ?
+              AND status != 'cancelled'
+              AND id != ?
+              LIMIT 1
+            `,
+            [appointmentDate, appointmentTime, id],
+            (conflictErr, conflict) => {
+              if (conflictErr) {
+                return res.status(500).json({ error: 'Failed to validate slot conflicts' });
+              }
+              if (conflict) {
+                return res.status(400).json({ error: 'This slot is already selected by another patient' });
+              }
+
+              db.run(
+                `
+                  UPDATE appointments
+                  SET appointmentDate = ?, appointmentTime = ?
+                  WHERE id = ? AND patientId = ?
+                `,
+                [appointmentDate, appointmentTime, id, patientId],
+                function onUpdated(updateErr) {
+                  if (updateErr) {
+                    return res.status(500).json({ error: 'Failed to reschedule appointment' });
+                  }
+                  if (this.changes === 0) {
+                    return res.status(404).json({ error: 'Appointment not found' });
+                  }
+                  return res.status(200).json({ message: 'Appointment rescheduled successfully' });
+                }
+              );
             }
           );
         }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import DashboardLayout from '../components/DashboardLayout';
@@ -11,24 +11,105 @@ function PatientAppointments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedBackupLink, setSelectedBackupLink] = useState('');
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [rescheduleForm, setRescheduleForm] = useState({
+    appointmentDate: '',
+    appointmentTime: ''
+  });
+  const [rescheduleSlots, setRescheduleSlots] = useState([]);
+  const [rescheduleSlotsLoading, setRescheduleSlotsLoading] = useState(false);
+  const [rescheduleSubmitting, setRescheduleSubmitting] = useState(false);
   const token = localStorage.getItem('token');
 
-  useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/appointments`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setAppointments(response.data);
-      } catch (err) {
-        setError(err.response?.data?.error || 'Failed to load appointments');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAppointments();
+  const fetchAppointments = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/appointments`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAppointments(response.data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to load appointments');
+    } finally {
+      setLoading(false);
+    }
   }, [token]);
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]);
+
+  const fetchSlotsForDate = async (date) => {
+    if (!date) {
+      setRescheduleSlots([]);
+      return;
+    }
+
+    setRescheduleSlotsLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/appointments/available-slots`, {
+        params: { date },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRescheduleSlots(response.data || []);
+    } catch (err) {
+      setRescheduleSlots([]);
+      alert(err.response?.data?.error || 'Failed to load available slots');
+    } finally {
+      setRescheduleSlotsLoading(false);
+    }
+  };
+
+  const openRescheduleModal = async (appointment) => {
+    setSelectedAppointment(appointment);
+    setRescheduleForm({
+      appointmentDate: appointment.appointmentDate || '',
+      appointmentTime: ''
+    });
+    setShowRescheduleModal(true);
+    await fetchSlotsForDate(appointment.appointmentDate);
+  };
+
+  const handleRescheduleDateChange = async (value) => {
+    setRescheduleForm((prev) => ({
+      ...prev,
+      appointmentDate: value,
+      appointmentTime: ''
+    }));
+    await fetchSlotsForDate(value);
+  };
+
+  const submitReschedule = async () => {
+    if (!selectedAppointment) return;
+    if (!rescheduleForm.appointmentDate || !rescheduleForm.appointmentTime) {
+      alert('Please choose both date and time');
+      return;
+    }
+
+    setRescheduleSubmitting(true);
+    try {
+      await axios.put(
+        `${API_BASE_URL}/api/appointments/${selectedAppointment.id}/reschedule`,
+        {
+          appointmentDate: rescheduleForm.appointmentDate,
+          appointmentTime: rescheduleForm.appointmentTime
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setShowRescheduleModal(false);
+      setSelectedAppointment(null);
+      setRescheduleSlots([]);
+      setRescheduleForm({ appointmentDate: '', appointmentTime: '' });
+      await fetchAppointments();
+      alert('Appointment rescheduled successfully');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to reschedule appointment');
+    } finally {
+      setRescheduleSubmitting(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -100,7 +181,18 @@ function PatientAppointments() {
       return <span className="text-muted">Not approved</span>;
     }
 
-    return <span className="text-muted">Awaiting doctor approval</span>;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+        <span className="text-muted">Awaiting doctor approval</span>
+        <button
+          type="button"
+          className="btn-secondary-small"
+          onClick={() => openRescheduleModal(appointment)}
+        >
+          Reschedule
+        </button>
+      </div>
+    );
   };
 
   if (loading) {
@@ -208,6 +300,71 @@ function PatientAppointments() {
                 </a>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showRescheduleModal && (
+        <div className="modal active" onClick={() => setShowRescheduleModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              Reschedule Appointment
+              <span className="modal-close" onClick={() => setShowRescheduleModal(false)}>&times;</span>
+            </div>
+            <form>
+              <div className="form-group">
+                <label htmlFor="rescheduleDate">New Date</label>
+                <input
+                  id="rescheduleDate"
+                  type="date"
+                  value={rescheduleForm.appointmentDate}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => handleRescheduleDateChange(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="rescheduleTime">New Time</label>
+                <select
+                  id="rescheduleTime"
+                  value={rescheduleForm.appointmentTime}
+                  onChange={(e) => setRescheduleForm((prev) => ({ ...prev, appointmentTime: e.target.value }))}
+                  disabled={!rescheduleForm.appointmentDate || rescheduleSlotsLoading || rescheduleSlots.length === 0}
+                >
+                  <option value="">Select available time</option>
+                  {rescheduleSlots.map((slot) => (
+                    <option key={slot.id} value={slot.slotTime}>
+                      {slot.slotTime}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  {!rescheduleForm.appointmentDate
+                    ? 'Select a date first'
+                    : rescheduleSlotsLoading
+                      ? 'Loading available slots...'
+                      : rescheduleSlots.length === 0
+                        ? 'No available slots for this date'
+                        : 'Only available slots are shown'}
+                </small>
+              </div>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={() => setShowRescheduleModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-submit"
+                  onClick={submitReschedule}
+                  disabled={rescheduleSubmitting}
+                >
+                  {rescheduleSubmitting ? 'Saving...' : 'Save New Slot'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
