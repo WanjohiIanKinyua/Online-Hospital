@@ -178,6 +178,20 @@ function PatientAppointments() {
     }
 
     if (appointment.approvalStatus === 'rejected') {
+      if (appointment.paymentStatus === 'completed') {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <span className="text-muted">Rejected (payment retained)</span>
+            <button
+              type="button"
+              className="btn-secondary-small"
+              onClick={() => openRescheduleModal(appointment)}
+            >
+              Reschedule Paid Appointment
+            </button>
+          </div>
+        );
+      }
       return <span className="text-muted">Not approved</span>;
     }
 

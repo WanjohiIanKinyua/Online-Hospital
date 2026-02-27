@@ -134,11 +134,14 @@ exports.rescheduleAppointment = (req, res) => {
       if (!appointment) {
         return res.status(404).json({ error: 'Appointment not found' });
       }
-      if (appointment.status === 'cancelled' || appointment.status === 'completed') {
+      if (appointment.status === 'completed') {
         return res.status(400).json({ error: 'This appointment cannot be rescheduled' });
       }
-      if (appointment.approvalStatus !== 'pending') {
-        return res.status(400).json({ error: 'Only pending appointments can be rescheduled' });
+
+      const isPendingApproval = appointment.approvalStatus === 'pending';
+      const isRejectedButPaid = appointment.approvalStatus === 'rejected' && appointment.paymentStatus === 'completed';
+      if (!isPendingApproval && !isRejectedButPaid) {
+        return res.status(400).json({ error: 'Only pending or rejected paid appointments can be rescheduled' });
       }
 
       db.get(
@@ -178,7 +181,11 @@ exports.rescheduleAppointment = (req, res) => {
               db.run(
                 `
                   UPDATE appointments
-                  SET appointmentDate = ?, appointmentTime = ?
+                  SET appointmentDate = ?,
+                      appointmentTime = ?,
+                      approvalStatus = 'pending',
+                      approvalReason = NULL,
+                      status = 'pending'
                   WHERE id = ? AND patientId = ?
                 `,
                 [appointmentDate, appointmentTime, id, patientId],
