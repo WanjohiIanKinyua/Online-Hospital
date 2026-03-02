@@ -70,6 +70,24 @@ const buildPatientNotice = (unreadCount, latestStatus) => {
   return parts.join(' ');
 };
 
+const getAlertVariant = (message = '') => {
+  const normalized = String(message).toLowerCase();
+  const errorTokens = [
+    'fail',
+    'failed',
+    'error',
+    'cannot',
+    'not allowed',
+    'not found',
+    'invalid',
+    'required',
+    'rejected',
+    'unable'
+  ];
+
+  return errorTokens.some((token) => normalized.includes(token)) ? 'error' : 'success';
+};
+
 function IdleSessionHandler({ isAuthenticated, userRole }) {
   const navigate = useNavigate();
 
@@ -298,6 +316,74 @@ function GlobalActivityNotifier({ isAuthenticated, userRole }) {
   );
 }
 
+function GlobalAlertBridge() {
+  const [alertState, setAlertState] = useState({
+    open: false,
+    message: '',
+    variant: 'success'
+  });
+
+  useEffect(() => {
+    const originalAlert = window.alert.bind(window);
+
+    window.alert = (message) => {
+      setAlertState({
+        open: true,
+        message: String(message || ''),
+        variant: getAlertVariant(message)
+      });
+    };
+
+    return () => {
+      window.alert = originalAlert;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!alertState.open) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      setAlertState((current) => ({ ...current, open: false }));
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
+  }, [alertState.open, alertState.message]);
+
+  if (!alertState.open) {
+    return null;
+  }
+
+  const title = alertState.variant === 'error' ? 'Action Needed' : 'Success';
+
+  return (
+    <div className="global-alert-overlay" role="alertdialog" aria-modal="true" aria-live="assertive">
+      <div className={`global-alert-popup ${alertState.variant}`}>
+        <button
+          type="button"
+          className="global-alert-close"
+          onClick={() => setAlertState((current) => ({ ...current, open: false }))}
+          aria-label="Close alert"
+        >
+          x
+        </button>
+        <div className="global-alert-title">{title}</div>
+        <div className="global-alert-message">{alertState.message}</div>
+        <div className="global-alert-actions">
+          <button
+            type="button"
+            className="global-alert-button"
+            onClick={() => setAlertState((current) => ({ ...current, open: false }))}
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
@@ -337,6 +423,7 @@ function App() {
     <Router>
       <IdleSessionHandler isAuthenticated={isAuthenticated} userRole={userRole} />
       <GlobalActivityNotifier isAuthenticated={isAuthenticated} userRole={userRole} />
+      <GlobalAlertBridge />
       <Routes>
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />

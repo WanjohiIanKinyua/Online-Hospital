@@ -1,6 +1,29 @@
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
 
+const getNairobiNow = () => {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Nairobi',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+
+  const parts = formatter.formatToParts(now).reduce((acc, part) => {
+    if (part.type !== 'literal') acc[part.type] = part.value;
+    return acc;
+  }, {});
+
+  return {
+    date: `${parts.year}-${parts.month}-${parts.day}`,
+    time: `${parts.hour}:${parts.minute}`
+  };
+};
+
 exports.getDoctors = (req, res) => {
   db.all(
     `
@@ -25,12 +48,18 @@ exports.getAvailableSlots = (req, res) => {
     return res.status(400).json({ error: 'Date is required' });
   }
 
+  const currentNairobi = getNairobiNow();
+
   db.all(
     `
       SELECT s.id, s.slotDate, s.slotTime
       FROM availability_slots s
       WHERE s.slotDate = ?
       AND s.isActive = 1
+      AND (
+        s.slotDate > ?
+        OR (s.slotDate = ? AND s.slotTime >= ?)
+      )
       AND NOT EXISTS (
         SELECT 1
         FROM appointments a
@@ -40,7 +69,7 @@ exports.getAvailableSlots = (req, res) => {
       )
       ORDER BY s.slotTime ASC
     `,
-    [date],
+    [date, currentNairobi.date, currentNairobi.date, currentNairobi.time],
     (err, slots) => {
       if (err) {
         return res.status(500).json({ error: 'Failed to fetch available slots' });

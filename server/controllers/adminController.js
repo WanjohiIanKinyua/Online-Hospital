@@ -3,6 +3,29 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
 const PASSWORD_POLICY_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/;
 
+const getNairobiNow = () => {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Nairobi',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+
+  const parts = formatter.formatToParts(now).reduce((acc, part) => {
+    if (part.type !== 'literal') acc[part.type] = part.value;
+    return acc;
+  }, {});
+
+  return {
+    date: `${parts.year}-${parts.month}-${parts.day}`,
+    time: `${parts.hour}:${parts.minute}`
+  };
+};
+
 const toMinutes = (timeString) => {
   const [h, m] = String(timeString || '').split(':').map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return null;
@@ -88,13 +111,17 @@ exports.getAllPatients = (req, res) => {
 };
 
 exports.getAvailabilitySlots = (req, res) => {
+  const currentNairobi = getNairobiNow();
+
   db.all(
     `
       SELECT id, slotDate, slotTime, isActive, createdAt
       FROM availability_slots
-      WHERE slotDate >= to_char(CURRENT_DATE, 'YYYY-MM-DD')
+      WHERE slotDate > ?
+         OR (slotDate = ? AND slotTime >= ?)
       ORDER BY slotDate ASC, slotTime ASC
     `,
+    [currentNairobi.date, currentNairobi.date, currentNairobi.time],
     (err, slots) => {
       if (err) {
         return res.status(500).json({ error: 'Failed to fetch availability slots' });
