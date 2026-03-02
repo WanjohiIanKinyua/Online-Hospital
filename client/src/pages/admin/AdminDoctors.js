@@ -81,7 +81,7 @@ function AdminDoctors() {
   };
 
   const deleteDoctor = async (doctor) => {
-    const confirmed = window.confirm(`Delete ${doctor.fullName} permanently? This action cannot be undone.`);
+    const confirmed = await window.confirm(`Delete ${doctor.fullName} permanently? This action cannot be undone.`);
     if (!confirmed) return;
 
     try {

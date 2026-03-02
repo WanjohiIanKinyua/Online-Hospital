@@ -320,42 +320,70 @@ function GlobalAlertBridge() {
   const [alertState, setAlertState] = useState({
     open: false,
     message: '',
-    variant: 'success'
+    variant: 'success',
+    mode: 'alert',
+    resolver: null
   });
 
   useEffect(() => {
     const originalAlert = window.alert.bind(window);
+    const originalConfirm = window.confirm.bind(window);
 
     window.alert = (message) => {
       setAlertState({
         open: true,
         message: String(message || ''),
-        variant: getAlertVariant(message)
+        variant: getAlertVariant(message),
+        mode: 'alert',
+        resolver: null
       });
     };
 
+    window.confirm = (message) => new Promise((resolve) => {
+      setAlertState({
+        open: true,
+        message: String(message || ''),
+        variant: 'confirm',
+        mode: 'confirm',
+        resolver: resolve
+      });
+    });
+
     return () => {
       window.alert = originalAlert;
+      window.confirm = originalConfirm;
     };
   }, []);
 
   useEffect(() => {
-    if (!alertState.open) {
+    if (!alertState.open || alertState.mode === 'confirm') {
       return undefined;
     }
 
     const timer = window.setTimeout(() => {
-      setAlertState((current) => ({ ...current, open: false }));
+      setAlertState((current) => ({ ...current, open: false, resolver: null }));
     }, 5000);
 
     return () => window.clearTimeout(timer);
-  }, [alertState.open, alertState.message]);
+  }, [alertState.open, alertState.message, alertState.mode]);
 
   if (!alertState.open) {
     return null;
   }
 
-  const title = alertState.variant === 'error' ? 'Action Needed' : 'Success';
+  const closePopup = (confirmed = false) => {
+    if (typeof alertState.resolver === 'function') {
+      alertState.resolver(confirmed);
+    }
+    setAlertState((current) => ({ ...current, open: false, resolver: null }));
+  };
+
+  const title =
+    alertState.mode === 'confirm'
+      ? 'Please Confirm'
+      : alertState.variant === 'error'
+        ? 'Action Needed'
+        : 'Success';
 
   return (
     <div className="global-alert-overlay" role="alertdialog" aria-modal="true" aria-live="assertive">
@@ -363,7 +391,7 @@ function GlobalAlertBridge() {
         <button
           type="button"
           className="global-alert-close"
-          onClick={() => setAlertState((current) => ({ ...current, open: false }))}
+          onClick={() => closePopup(false)}
           aria-label="Close alert"
         >
           x
@@ -371,13 +399,32 @@ function GlobalAlertBridge() {
         <div className="global-alert-title">{title}</div>
         <div className="global-alert-message">{alertState.message}</div>
         <div className="global-alert-actions">
-          <button
-            type="button"
-            className="global-alert-button"
-            onClick={() => setAlertState((current) => ({ ...current, open: false }))}
-          >
-            OK
-          </button>
+          {alertState.mode === 'confirm' ? (
+            <>
+              <button
+                type="button"
+                className="global-alert-button secondary"
+                onClick={() => closePopup(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="global-alert-button"
+                onClick={() => closePopup(true)}
+              >
+                Confirm
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="global-alert-button"
+              onClick={() => closePopup(false)}
+            >
+              OK
+            </button>
+          )}
         </div>
       </div>
     </div>

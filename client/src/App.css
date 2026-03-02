@@ -572,6 +572,12 @@ tr:hover {
   color: #991b1b;
 }
 
+.global-alert-popup.confirm {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
 .global-alert-close {
   position: absolute;
   top: 0.7rem;
@@ -625,6 +631,15 @@ tr:hover {
 .global-alert-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.26);
+}
+
+.global-alert-button.secondary {
+  color: #1e3a8a;
+  background: #dbeafe;
+}
+
+.global-alert-button.secondary:hover {
+  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.18);
 }
 
 @media (max-width: 480px) {

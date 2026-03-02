@@ -137,7 +137,7 @@ function AdminPatients() {
   };
 
   const handleDeletePatient = async (patient) => {
-    const confirmed = window.confirm(`Delete patient ${getDisplayName(patient)}? This also removes their appointments and records.`);
+    const confirmed = await window.confirm(`Delete patient ${getDisplayName(patient)}? This also removes their appointments and records.`);
     if (!confirmed) return;
 
     try {

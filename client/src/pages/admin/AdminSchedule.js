@@ -65,6 +65,7 @@ function AdminSchedule() {
       });
       setSlotForm({ slotDate: '', slotTime: '' });
       await loadSlots();
+      alert('Availability slot created successfully');
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to add availability slot');
     }
@@ -91,7 +92,7 @@ function AdminSchedule() {
   };
 
   const deleteAvailabilitySlot = async (slotId) => {
-    const confirmed = window.confirm('Delete this availability slot?');
+    const confirmed = await window.confirm('Delete this availability slot?');
     if (!confirmed) return;
 
     try {
@@ -99,6 +100,7 @@ function AdminSchedule() {
         headers: { Authorization: `Bearer ${token}` }
       });
       await loadSlots();
+      alert('Availability slot deleted successfully');
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to delete slot');
     }
