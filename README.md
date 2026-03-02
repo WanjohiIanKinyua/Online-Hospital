@@ -64,15 +64,10 @@ REACT_APP_API_URL=http://localhost:5000
 REACT_APP_API_URL=https://online-hospital.onrender.com
 ```
 
-## Demo Credentials
+## Access
 
-### Patient
-- Email: `patient@example.com`
-- Password: `password`
-
-### Admin
-- Email: `drnaserian@admin.com`
-- Password: `password`
+- Create your own user account through the registration page.
+- Admin access credentials should be kept private in deployment or local environment setup, not committed to public documentation.
 
 ## Key Features
 
