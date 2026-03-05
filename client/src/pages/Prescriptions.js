@@ -97,7 +97,7 @@ DIGITAL PRESCRIPTION
 
 Prescription ID: ${prescription.id}
 Issued Date: ${new Date(prescription.issuedAt).toLocaleDateString()}
-Doctor: ${prescription.doctorName}
+Doctor: ${prescription.doctorName || 'Dr. Merceline'}
 
 ====================================
 
@@ -135,90 +135,89 @@ Please use it as instructed by your doctor.
   return (
     <DashboardLayout role="patient">
       <div className="prescriptions-page">
-        <div className="container">
-        <Link to="/dashboard" className="back-button">
-          <FiArrowLeft /> Back to Dashboard
-        </Link>
+        <div className="prescriptions-container">
+          <Link to="/dashboard" className="back-button">
+            <FiArrowLeft /> Back to Dashboard
+          </Link>
 
-        <div className="prescriptions-card">
-          <h1>Your Prescriptions</h1>
+          <div className="prescriptions-card">
+            <h1>Your Prescriptions</h1>
 
-          {error && <div className="alert alert-danger">{error}</div>}
+            {error && <div className="alert alert-danger">{error}</div>}
 
-          {prescriptions.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">📋</div>
-              <div className="empty-state-text">No prescriptions yet</div>
-              <p style={{ color: '#999', marginTop: '10px' }}>
-                Prescriptions will appear here after your consultations
-              </p>
-            </div>
-          ) : (
-            <div className="prescriptions-list">
-              {prescriptions.map(prescription => (
-                <div key={prescription.id} className="prescription-item">
-                  <div className="prescription-header">
-                    <div>
-                      <h3>Prescription from {prescription.doctorName}</h3>
-                      <p className="prescription-date">
-                        Issued on {new Date(prescription.issuedAt).toLocaleDateString()}
-                      </p>
+            {prescriptions.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon">??</div>
+                <div className="empty-state-text">No prescriptions yet</div>
+                <p style={{ color: '#64748b', marginTop: '10px' }}>
+                  Prescriptions will appear here after your consultations
+                </p>
+              </div>
+            ) : (
+              <div className="prescriptions-list">
+                {prescriptions.map((prescription) => (
+                  <div key={prescription.id} className="prescription-item">
+                    <div className="prescription-header">
+                      <div>
+                        <h3>Prescription from {prescription.doctorName || 'Dr. Merceline'}</h3>
+                        <p className="prescription-date">
+                          Issued on {new Date(prescription.issuedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="prescription-actions">
+                        <button
+                          className="btn-download-prescription"
+                          onClick={() => downloadPrescription(prescription)}
+                          title="Download prescription"
+                        >
+                          <FiDownload /> Download PDF
+                        </button>
+                        <button
+                          className="btn-print-prescription"
+                          onClick={() => printPrescription(prescription)}
+                          title="Print prescription"
+                        >
+                          <FiPrinter /> Print
+                        </button>
+                      </div>
                     </div>
-                    <div className="prescription-actions">
-                      <button
-                        className="btn-download-prescription"
-                        onClick={() => downloadPrescription(prescription)}
-                        title="Download prescription"
-                      >
-                        <FiDownload /> Download
-                      </button>
-                      <button
-                        className="btn-print-prescription"
-                        onClick={() => printPrescription(prescription)}
-                        title="Print prescription"
-                      >
-                        <FiPrinter /> Print
-                      </button>
+
+                    <div className="prescription-content">
+                      <div className="prescription-section">
+                        <h4>Medications</h4>
+                        <p>{prescription.medications}</p>
+                      </div>
+
+                      {prescription.dosageInstructions && (
+                        <div className="prescription-section">
+                          <h4>Dosage Instructions</h4>
+                          <p>{prescription.dosageInstructions}</p>
+                        </div>
+                      )}
+
+                      {prescription.medicalNotes && (
+                        <div className="prescription-section">
+                          <h4>Medical Notes</h4>
+                          <p>{prescription.medicalNotes}</p>
+                        </div>
+                      )}
+
+                      {prescription.followUpRecommendations && (
+                        <div className="prescription-section">
+                          <h4>Follow-up Recommendations</h4>
+                          <p>{prescription.followUpRecommendations}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
-
-                  <div className="prescription-content">
-                    <div className="prescription-section">
-                      <h4>Medications</h4>
-                      <p>{prescription.medications}</p>
-                    </div>
-
-                    {prescription.dosageInstructions && (
-                      <div className="prescription-section">
-                        <h4>Dosage Instructions</h4>
-                        <p>{prescription.dosageInstructions}</p>
-                      </div>
-                    )}
-
-                    {prescription.medicalNotes && (
-                      <div className="prescription-section">
-                        <h4>Medical Notes</h4>
-                        <p>{prescription.medicalNotes}</p>
-                      </div>
-                    )}
-
-                    {prescription.followUpRecommendations && (
-                      <div className="prescription-section">
-                        <h4>Follow-up Recommendations</h4>
-                        <p>{prescription.followUpRecommendations}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
       </div>
     </DashboardLayout>
   );
 }
 
 export default Prescriptions;
-
