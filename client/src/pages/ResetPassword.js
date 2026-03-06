@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import '../styles/AuthPages.css';
@@ -9,8 +9,10 @@ const PASSWORD_POLICY_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/;
 
 function ResetPassword() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const token = useMemo(() => searchParams.get('token') || '', [searchParams]);
+  const [resetCode, setResetCode] = useState(() => location.state?.resetCode || token || '');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -18,14 +20,27 @@ function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [copyLabel, setCopyLabel] = useState('Copy');
+
+  const copyResetCode = async () => {
+    if (!resetCode) return;
+    try {
+      await navigator.clipboard.writeText(resetCode);
+      setCopyLabel('Copied');
+      setTimeout(() => setCopyLabel('Copy'), 1200);
+    } catch (err) {
+      setCopyLabel('Copy Failed');
+      setTimeout(() => setCopyLabel('Copy'), 1200);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
 
-    if (!token) {
-      setError('Reset token is missing. Please use the link from your email.');
+    if (!resetCode.trim() && !token) {
+      setError('Reset code is required. Paste the code from forgot password.');
       return;
     }
 
@@ -42,7 +57,8 @@ function ResetPassword() {
     setLoading(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/api/auth/reset-password`, {
-        token,
+        token: token || resetCode.trim(),
+        resetCode: resetCode.trim(),
         newPassword,
         confirmPassword
       });
@@ -65,14 +81,14 @@ function ResetPassword() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <h2>Reset Password</h2>
-          <p className="auth-subtitle">Enter your new password and confirm it.</p>
+          <h2>Reset password</h2>
+          <p className="auth-subtitle">Enter reset code and your new password</p>
 
           {error && <div className="alert alert-danger">{error}</div>}
           {message && <div className="alert alert-success">{message}</div>}
 
           <div className="form-group">
-            <label htmlFor="newPassword">New Password</label>
+            <label htmlFor="newPassword">Password</label>
             <div className="password-input-wrapper">
               <input
                 type={showNewPassword ? 'text' : 'password'}
@@ -95,7 +111,7 @@ function ResetPassword() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm New Password</label>
+            <label htmlFor="confirmPassword">Confirm Password</label>
             <div className="password-input-wrapper">
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
@@ -117,13 +133,41 @@ function ResetPassword() {
             </div>
           </div>
 
+          <div className="form-group">
+            <label htmlFor="resetCode">Reset Code</label>
+            <input
+              type="text"
+              id="resetCode"
+              value={resetCode}
+              onChange={(e) => setResetCode(e.target.value)}
+              required
+              placeholder="Paste reset code"
+            />
+            <p className="password-hint">
+              Use at least 6 characters with one letter, one number, and one special character.
+            </p>
+          </div>
+
+          {resetCode && (
+            <div className="auth-note reset-code-note">
+              <p className="reset-code-title">Reset code generated successfully. Use it below to reset your password.</p>
+              <div className="reset-code-row">
+                <span className="reset-code-label">Reset Code</span>
+                <button type="button" className="reset-copy-btn" onClick={copyResetCode}>
+                  {copyLabel}
+                </button>
+              </div>
+              <div className="reset-code-box">{resetCode}</div>
+            </div>
+          )}
+
           <button type="submit" className="btn-primary" style={{ width: '100%' }} disabled={loading}>
             {loading ? 'Resetting...' : 'Reset Password'}
           </button>
         </form>
 
         <div className="auth-footer">
-          <p>Back to <Link to="/login">Login</Link></p>
+          <p>Back to <Link to="/login">login</Link></p>
         </div>
       </div>
     </div>

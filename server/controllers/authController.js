@@ -191,7 +191,9 @@ exports.forgotPassword = (req, res) => {
         try {
           const result = await sendResetEmail({ toEmail: user.email, resetLink });
           const response = {
-            message: 'If an account with that email exists, a reset link has been sent.'
+            message: 'Reset code generated successfully. Use it below to reset your password.',
+            resetCode: rawToken,
+            resetCodeExpiresAt: expiresAt
           };
 
           if (result.usedFallback) {
@@ -208,10 +210,11 @@ exports.forgotPassword = (req, res) => {
 };
 
 exports.resetPassword = (req, res) => {
-  const { token, newPassword, confirmPassword } = req.body;
+  const { token, resetCode, newPassword, confirmPassword } = req.body;
+  const effectiveToken = String(token || resetCode || '').trim();
 
-  if (!token || !newPassword || !confirmPassword) {
-    return res.status(400).json({ error: 'Token and both password fields are required' });
+  if (!effectiveToken || !newPassword || !confirmPassword) {
+    return res.status(400).json({ error: 'Reset code and both password fields are required' });
   }
 
   if (newPassword !== confirmPassword) {
@@ -224,7 +227,7 @@ exports.resetPassword = (req, res) => {
     });
   }
 
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const tokenHash = crypto.createHash('sha256').update(effectiveToken).digest('hex');
 
   db.get(
     `SELECT id, resetTokenExpiresAt FROM users WHERE resetTokenHash = ?`,
