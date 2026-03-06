@@ -9,20 +9,20 @@ function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [devResetLink, setDevResetLink] = useState('');
+  const [resetLink, setResetLink] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setMessage('');
-    setDevResetLink('');
+    setResetLink('');
 
     try {
       const response = await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, { email });
       setMessage(response.data?.message || 'If the account exists, a reset link has been sent.');
-      if (response.data?.devResetLink) {
-        setDevResetLink(response.data.devResetLink);
+      if (response.data?.resetLink) {
+        setResetLink(response.data.resetLink);
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to send reset email. Please try again.');
@@ -63,10 +63,10 @@ function ForgotPassword() {
           </button>
         </form>
 
-        {devResetLink && (
+        {resetLink && (
           <div className="auth-note">
-            <strong>Dev reset link:</strong>{' '}
-            <a href={devResetLink} target="_blank" rel="noreferrer">
+            <strong>Reset link:</strong>{' '}
+            <a href={resetLink} target="_blank" rel="noreferrer">
               Open reset page
             </a>
           </div>

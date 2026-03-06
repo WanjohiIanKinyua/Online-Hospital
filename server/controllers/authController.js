@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const db = require('../database');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
+const CLIENT_URL = process.env.CLIENT_URL || '';
 const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000;
 const PASSWORD_POLICY_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/;
 
@@ -18,22 +18,16 @@ const sendResetEmail = async ({ toEmail, resetLink }) => {
   const from = process.env.MAIL_FROM || process.env.SMTP_USER;
 
   if (!host || !user || !pass || !from) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Password reset email fallback (dev mode):', resetLink);
-      return { sent: false, usedFallback: true };
-    }
-    throw new Error('Email service is not configured.');
+    console.log('Password reset email fallback (SMTP not configured):', resetLink);
+    return { sent: false, usedFallback: true };
   }
 
   let nodemailer;
   try {
     nodemailer = require('nodemailer');
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('nodemailer not installed. Password reset link (dev):', resetLink);
-      return { sent: false, usedFallback: true };
-    }
-    throw new Error('Email service is unavailable.');
+    console.log('Password reset email fallback (nodemailer unavailable):', resetLink);
+    return { sent: false, usedFallback: true };
   }
 
   const transporter = nodemailer.createTransport({
@@ -191,7 +185,8 @@ exports.forgotPassword = (req, res) => {
           return res.status(500).json({ error: 'Failed to process request' });
         }
 
-        const resetLink = `${CLIENT_URL}/reset-password?token=${rawToken}`;
+        const normalizedClientUrl = String(CLIENT_URL || req.headers.origin || 'http://localhost:3000').replace(/\/$/, '');
+        const resetLink = `${normalizedClientUrl}/reset-password?token=${rawToken}`;
 
         try {
           const result = await sendResetEmail({ toEmail: user.email, resetLink });
@@ -199,8 +194,8 @@ exports.forgotPassword = (req, res) => {
             message: 'If an account with that email exists, a reset link has been sent.'
           };
 
-          if (result.usedFallback && process.env.NODE_ENV !== 'production') {
-            response.devResetLink = resetLink;
+          if (result.usedFallback) {
+            response.resetLink = resetLink;
           }
 
           return res.status(200).json(response);
