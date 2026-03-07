@@ -157,8 +157,8 @@ function AdminAppointments() {
       <div className="dashboard-content">
         <div className="dashboard-header">
           <div className="header-text">
-            <h1 className="dashboard-title">Latest Bookings</h1>
-            <p className="dashboard-subtitle">Manage latest bookings, meeting links, status, and prescriptions</p>
+            <h1 className="dashboard-title">Recent Bookings</h1>
+            <p className="dashboard-subtitle">Manage recent bookings, meeting links, status, and prescriptions</p>
           </div>
         </div>
 

@@ -205,7 +205,7 @@ function AdminDashboard() {
         <div className="card">
           <div className="card-header">
             <div className="card-title-section">
-              <h2 className="card-title">Latest Pending Bookings</h2>
+              <h2 className="card-title">Recent Pending Bookings</h2>
             </div>
             <Link to="/admin/appointments" className="btn-secondary-small">
               View More <FiArrowRight />

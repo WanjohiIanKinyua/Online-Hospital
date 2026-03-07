@@ -194,11 +194,11 @@ function PatientDashboard() {
               </div>
             </div>
 
-            {/* Latest + Pending-like Appointments */}
+            {/* Recent + Pending-like Appointments */}
             <div className="card">
               <div className="card-header">
                 <div className="card-title-section">
-                  <h2 className="card-title">Latest Pending Appointments</h2>
+                  <h2 className="card-title">Recent Pending Appointments</h2>
                 </div>
                 <div className="card-header-actions">
                   <Link to="/appointments" className="btn-secondary-small">
@@ -269,7 +269,7 @@ function PatientDashboard() {
             <div className="card">
               <div className="card-header">
                 <div className="card-title-section">
-                  <h2 className="card-title">Latest Booking Records</h2>
+                  <h2 className="card-title">Recent Booking Records</h2>
                 </div>
                 <Link to="/appointments" className="btn-secondary-small">
                   View More

@@ -222,8 +222,8 @@ function PatientAppointments() {
       <div className="dashboard-content">
         <div className="dashboard-header">
           <div className="header-text">
-            <h1 className="dashboard-title">Latest Bookings</h1>
-            <p className="dashboard-subtitle">Track your latest bookings, approval status, and consultations</p>
+            <h1 className="dashboard-title">Recent Bookings</h1>
+            <p className="dashboard-subtitle">Track your recent bookings, approval status, and consultations</p>
           </div>
         </div>
 
