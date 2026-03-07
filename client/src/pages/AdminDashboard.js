@@ -201,7 +201,7 @@ function AdminDashboard() {
               <h2 className="card-title">Recent Appointments</h2>
             </div>
             <Link to="/admin/appointments" className="btn-secondary-small">
-              View All <FiArrowRight />
+              View More <FiArrowRight />
             </Link>
           </div>
           <div className="card-content">
@@ -219,7 +219,7 @@ function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {appointments.slice(0, 6).map((apt) => (
+                    {appointments.slice(0, 5).map((apt) => (
                       <tr key={apt.id}>
                         <td>{getDisplayName(apt)}</td>
                         <td>{formatDate(apt.appointmentDate || apt.appointmentdate)}</td>
@@ -244,7 +244,7 @@ function AdminDashboard() {
               <h2 className="card-title">Recent Patients</h2>
             </div>
             <Link to="/admin/patients" className="btn-secondary-small">
-              Manage Patients <FiArrowRight />
+              View More <FiArrowRight />
             </Link>
           </div>
           <div className="card-content">
@@ -262,7 +262,7 @@ function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {patients.slice(0, 6).map((patient) => (
+                    {patients.slice(0, 5).map((patient) => (
                       <tr key={patient.id}>
                         <td>{getDisplayName(patient)}</td>
                         <td>{patient.email}</td>

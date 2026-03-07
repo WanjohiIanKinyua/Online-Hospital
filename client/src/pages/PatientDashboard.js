@@ -75,7 +75,7 @@ function PatientDashboard() {
   const upcomingAppointments = appointments
     .filter(a => a.status === 'confirmed' && new Date(a.appointmentDate) >= new Date())
     .sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate))
-    .slice(0, 3);
+    .slice(0, 5);
 
   const formatDate = (dateStr) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -196,9 +196,14 @@ function PatientDashboard() {
                 <div className="card-title-section">
                   <h2 className="card-title">Upcoming Appointments</h2>
                 </div>
-                <Link to="/book-appointment" className="btn-primary-small">
-                  <span>+ Book New</span>
-                </Link>
+                <div className="card-header-actions">
+                  <Link to="/appointments" className="btn-secondary-small">
+                    View More
+                  </Link>
+                  <Link to="/book-appointment" className="btn-primary-small">
+                    <span>+ Book New</span>
+                  </Link>
+                </div>
               </div>
               <div className="card-content">
                 {upcomingAppointments.length === 0 ? (
@@ -228,14 +233,19 @@ function PatientDashboard() {
             {/* Recent Prescriptions */}
             <div className="card">
               <div className="card-header">
-                <h2 className="card-title">Recent Prescriptions</h2>
+                <div className="card-title-section">
+                  <h2 className="card-title">Recent Prescriptions</h2>
+                </div>
+                <Link to="/prescriptions" className="btn-secondary-small">
+                  View More
+                </Link>
               </div>
               <div className="card-content">
                 {prescriptions.length === 0 ? (
                   <p className="empty-message">No prescriptions yet. They will appear here after your consultations.</p>
                 ) : (
                   <div className="prescriptions-list">
-                    {prescriptions.slice(0, 3).map((prescription) => (
+                    {prescriptions.slice(0, 5).map((prescription) => (
                       <div key={prescription.id} className="prescription-item">
                         <div className="prescription-info">
                           <p className="prescription-date">
@@ -256,7 +266,12 @@ function PatientDashboard() {
             {/* Booked Appointments */}
             <div className="card">
               <div className="card-header">
-                <h2 className="card-title">Booked Appointments</h2>
+                <div className="card-title-section">
+                  <h2 className="card-title">Booked Appointments</h2>
+                </div>
+                <Link to="/appointments" className="btn-secondary-small">
+                  View More
+                </Link>
               </div>
               <div className="card-content">
                 {appointments.length === 0 ? (
@@ -275,7 +290,7 @@ function PatientDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {appointments.map((appointment) => (
+                        {appointments.slice(0, 5).map((appointment) => (
                           <tr key={appointment.id}>
                             <td>{formatDate(appointment.appointmentDate)}</td>
                             <td>

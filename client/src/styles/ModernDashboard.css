@@ -239,6 +239,13 @@
   flex: 1;
 }
 
+.card-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
 .card-title {
   font-size: 1.25rem;
   font-weight: 700;
@@ -688,6 +695,10 @@ form {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+  }
+
+  .card-header-actions {
+    width: 100%;
   }
 
   .dashboard-header {
