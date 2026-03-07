@@ -157,15 +157,15 @@ function AdminAppointments() {
       <div className="dashboard-content">
         <div className="dashboard-header">
           <div className="header-text">
-            <h1 className="dashboard-title">Appointments</h1>
-            <p className="dashboard-subtitle">Manage meeting links, status, and prescriptions</p>
+            <h1 className="dashboard-title">Latest Bookings</h1>
+            <p className="dashboard-subtitle">Manage latest bookings, meeting links, status, and prescriptions</p>
           </div>
         </div>
 
         <div className="card">
           <div className="card-header">
             <div className="card-title-section">
-              <h2 className="card-title">All Appointments</h2>
+              <h2 className="card-title">All Booking Records</h2>
             </div>
           </div>
 

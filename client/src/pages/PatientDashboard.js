@@ -267,7 +267,7 @@ function PatientDashboard() {
             <div className="card">
               <div className="card-header">
                 <div className="card-title-section">
-                  <h2 className="card-title">Booked Appointments</h2>
+                  <h2 className="card-title">Latest Booked Appointments</h2>
                 </div>
                 <Link to="/appointments" className="btn-secondary-small">
                   View More
