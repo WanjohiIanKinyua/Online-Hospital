@@ -28,6 +28,13 @@ function AdminDashboard() {
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleDateString();
   };
+  const latestPendingLikeAppointments = appointments
+    .filter((apt) => {
+      const status = String(apt.status || '').toLowerCase();
+      const approval = String(apt.approvalStatus || '').toLowerCase();
+      return status === 'pending' || status === 'confirmed' || approval === 'pending';
+    })
+    .slice(0, 5);
 
   const loadOverview = useCallback(async () => {
     try {
@@ -198,15 +205,15 @@ function AdminDashboard() {
         <div className="card">
           <div className="card-header">
             <div className="card-title-section">
-              <h2 className="card-title">Latest Bookings</h2>
+              <h2 className="card-title">Latest Pending Bookings</h2>
             </div>
             <Link to="/admin/appointments" className="btn-secondary-small">
               View More <FiArrowRight />
             </Link>
           </div>
           <div className="card-content">
-            {appointments.length === 0 ? (
-              <div className="empty-message">No appointments scheduled</div>
+            {latestPendingLikeAppointments.length === 0 ? (
+              <div className="empty-message">No pending or active bookings right now</div>
             ) : (
               <div className="table-responsive">
                 <table className="appointments-table">
@@ -219,7 +226,7 @@ function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {appointments.slice(0, 5).map((apt) => (
+                    {latestPendingLikeAppointments.map((apt) => (
                       <tr key={apt.id}>
                         <td>{getDisplayName(apt)}</td>
                         <td>{formatDate(apt.appointmentDate || apt.appointmentdate)}</td>

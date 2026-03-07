@@ -72,9 +72,13 @@ function PatientDashboard() {
     fetchData();
   }, [navigate, token]);
 
-  const upcomingAppointments = appointments
-    .filter(a => a.status === 'confirmed' && new Date(a.appointmentDate) >= new Date())
-    .sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate))
+  const latestPendingLikeAppointments = appointments
+    .filter((appointment) => {
+      const status = String(appointment.status || '').toLowerCase();
+      const approval = String(appointment.approvalStatus || '').toLowerCase();
+      return status === 'pending' || status === 'confirmed' || approval === 'pending';
+    })
+    .sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate))
     .slice(0, 5);
 
   const formatDate = (dateStr) => {
@@ -190,11 +194,11 @@ function PatientDashboard() {
               </div>
             </div>
 
-            {/* Upcoming Appointments */}
+            {/* Latest + Pending-like Appointments */}
             <div className="card">
               <div className="card-header">
                 <div className="card-title-section">
-                  <h2 className="card-title">Upcoming Appointments</h2>
+                  <h2 className="card-title">Latest Pending Appointments</h2>
                 </div>
                 <div className="card-header-actions">
                   <Link to="/appointments" className="btn-secondary-small">
@@ -206,11 +210,11 @@ function PatientDashboard() {
                 </div>
               </div>
               <div className="card-content">
-                {upcomingAppointments.length === 0 ? (
-                  <p className="empty-message">No upcoming appointments. Book a consultation to get started.</p>
+                {latestPendingLikeAppointments.length === 0 ? (
+                  <p className="empty-message">No pending or active appointments. Book a consultation to get started.</p>
                 ) : (
                   <div className="appointments-list">
-                    {upcomingAppointments.map((appointment) => (
+                    {latestPendingLikeAppointments.map((appointment) => (
                       <div key={appointment.id} className="appointment-item">
                         <div className="appointment-info">
                           <p className="appointment-date">
@@ -220,9 +224,7 @@ function PatientDashboard() {
                             {appointment.status}
                           </span>
                         </div>
-                        <Link to={`/consultation/${appointment.id}`} className="btn-join-meeting">
-                          <FiVideo /> Enter Care Room
-                        </Link>
+                        {renderConsultationAction(appointment)}
                       </div>
                     ))}
                   </div>
@@ -267,15 +269,15 @@ function PatientDashboard() {
             <div className="card">
               <div className="card-header">
                 <div className="card-title-section">
-                  <h2 className="card-title">Latest Booked Appointments</h2>
+                  <h2 className="card-title">Latest Booking Records</h2>
                 </div>
                 <Link to="/appointments" className="btn-secondary-small">
                   View More
                 </Link>
               </div>
               <div className="card-content">
-                {appointments.length === 0 ? (
-                  <p className="empty-message">No booked appointments found yet.</p>
+                {latestPendingLikeAppointments.length === 0 ? (
+                  <p className="empty-message">No pending or active booking records found.</p>
                 ) : (
                   <div className="table-responsive">
                     <table className="appointments-table">
@@ -290,7 +292,7 @@ function PatientDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {appointments.slice(0, 5).map((appointment) => (
+                        {latestPendingLikeAppointments.map((appointment) => (
                           <tr key={appointment.id}>
                             <td>{formatDate(appointment.appointmentDate)}</td>
                             <td>
