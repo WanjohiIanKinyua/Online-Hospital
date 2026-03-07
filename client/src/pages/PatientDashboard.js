@@ -76,7 +76,12 @@ function PatientDashboard() {
     .filter((appointment) => {
       const status = String(appointment.status || '').toLowerCase();
       const approval = String(appointment.approvalStatus || '').toLowerCase();
-      return status === 'pending' || status === 'confirmed' || approval === 'pending';
+      return (
+        (status === 'pending' || status === 'confirmed') &&
+        status !== 'completed' &&
+        status !== 'cancelled' &&
+        approval !== 'rejected'
+      );
     })
     .sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate))
     .slice(0, 5);
@@ -265,57 +270,6 @@ function PatientDashboard() {
               </div>
             </div>
 
-            {/* Booked Appointments */}
-            <div className="card">
-              <div className="card-header">
-                <div className="card-title-section">
-                  <h2 className="card-title">Recent Booking Records</h2>
-                </div>
-                <Link to="/appointments" className="btn-secondary-small">
-                  View More
-                </Link>
-              </div>
-              <div className="card-content">
-                {latestPendingLikeAppointments.length === 0 ? (
-                  <p className="empty-message">No pending or active booking records found.</p>
-                ) : (
-                  <div className="table-responsive">
-                    <table className="appointments-table">
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Status</th>
-                          <th>Approval</th>
-                          <th>Reason</th>
-                          <th>Doctor</th>
-                          <th>Consultation</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {latestPendingLikeAppointments.map((appointment) => (
-                          <tr key={appointment.id}>
-                            <td>{formatDate(appointment.appointmentDate)}</td>
-                            <td>
-                              <span className={`status-badge ${getStatusColor(appointment.status)}`}>
-                                {appointment.status}
-                              </span>
-                            </td>
-                            <td>
-                              <span className={`status-badge ${getApprovalColor(appointment.approvalStatus)}`}>
-                                {appointment.approvalStatus || 'pending'}
-                              </span>
-                            </td>
-                            <td>{appointment.approvalReason || <span className="text-muted">-</span>}</td>
-                            <td>{appointment.doctorName || 'Dr. Merceline'}</td>
-                            <td>{renderConsultationAction(appointment)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
           </>
         )}
       </div>
