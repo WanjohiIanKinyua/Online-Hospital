@@ -106,18 +106,6 @@ function PatientDashboard() {
     }
   };
 
-  const getApprovalColor = (approvalStatus) => {
-    switch (approvalStatus) {
-      case 'approved':
-        return 'status-approved';
-      case 'rejected':
-        return 'status-rejected';
-      case 'pending':
-      default:
-        return 'status-pending';
-    }
-  };
-
   const renderConsultationAction = (appointment) => {
     if (appointment.approvalStatus === 'approved') {
       if (appointment.status === 'completed') {
